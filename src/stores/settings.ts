@@ -31,6 +31,8 @@ export const useSettingsStore = defineStore('settings', () => {
   })
   
   const gameSettings = ref({
+    aiEnabled: false,
+    aiProvider: 'local',
     autoSave: true,
     autoSaveInterval: 300000,
     soundEnabled: true,
