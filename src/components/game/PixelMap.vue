@@ -1,12 +1,14 @@
 <template>
-  <div class="pixel-map-container" ref="mapContainer" @click="handleMapClick">
+  <div class="pixel-map-container" ref="mapContainer" @click="handleMapClick" @mousemove="handleMouseMove">
     <div class="pixel-map" :style="mapStyle">
       <div class="map-grid">
         <div
           v-for="(tile, index) in mapTiles"
           :key="index"
-          :class="['tile', tile.type]"
+          :class="['tile', tile.type, { 'tile-hover': hoveredTile && hoveredTile.x === tile.x && hoveredTile.y === tile.y }]"
           :style="getTileStyle(tile)"
+          @mouseenter="hoveredTile = tile"
+          @mouseleave="hoveredTile = null"
         >
           <span v-if="tile.icon" class="tile-icon">{{ tile.icon }}</span>
         </div>
@@ -19,6 +21,7 @@
       >
         <div class="character-sprite">🧙</div>
         <div class="character-name">{{ playerName }}</div>
+        <div class="player-indicator"></div>
       </div>
       
       <div
@@ -27,9 +30,15 @@
         class="npc-character"
         :style="getNpcStyle(npc)"
         @click.stop="interactWithNpc(npc)"
+        @mouseenter="hoveredNpc = npc"
+        @mouseleave="hoveredNpc = null"
       >
         <div class="character-sprite">{{ npc.sprite }}</div>
         <div class="character-name">{{ npc.name }}</div>
+        <div v-if="hoveredNpc === npc" class="npc-tooltip">
+          <div class="tooltip-name">{{ npc.name }}</div>
+          <div class="tooltip-hint">点击交互</div>
+        </div>
       </div>
       
       <div
@@ -38,15 +47,66 @@
         class="map-location"
         :style="getLocationStyle(location)"
         @click.stop="enterLocation(location)"
+        @mouseenter="hoveredLocation = location"
+        @mouseleave="hoveredLocation = null"
       >
         <div class="location-icon">{{ location.icon }}</div>
         <div class="location-name">{{ location.name }}</div>
+        <div v-if="hoveredLocation === location" class="location-tooltip">
+          <div class="tooltip-title">{{ location.name }}</div>
+          <div class="tooltip-type">{{ getLocationTypeText(location.type) }}</div>
+          <div class="tooltip-hint">点击进入</div>
+        </div>
+      </div>
+      
+      <div v-if="showPath" class="path-indicator">
+        <div
+          v-for="(point, index) in pathPoints"
+          :key="index"
+          class="path-point"
+          :style="{ left: `${point.x * TILE_SIZE}px`, top: `${point.y * TILE_SIZE}px` }"
+        ></div>
       </div>
     </div>
     
     <div class="map-controls">
-      <div class="control-hint">点击地图移动 | WASD/方向键移动</div>
+      <div class="control-row">
+        <div class="control-hint">
+          <span class="hint-icon">🖱️</span>
+          <span class="hint-text">点击移动</span>
+        </div>
+        <div class="control-hint">
+          <span class="hint-icon">⌨️</span>
+          <span class="hint-text">WASD移动</span>
+        </div>
+        <div class="control-hint">
+          <span class="hint-icon">E</span>
+          <span class="hint-text">进入建筑</span>
+        </div>
+      </div>
     </div>
+    
+    <div v-if="hoveredTile" class="tile-info">
+      <div class="info-icon">{{ getTileIcon(hoveredTile.type) }}</div>
+      <div class="info-text">{{ getTileName(hoveredTile.type) }}</div>
+      <div v-if="!hoveredTile.walkable" class="info-warning">不可通行</div>
+    </div>
+    
+    <transition name="fade">
+      <div v-if="showInteractionDialog" class="interaction-dialog" @click.stop>
+        <div class="dialog-header">
+          <div class="dialog-icon">{{ currentInteraction?.sprite }}</div>
+          <div class="dialog-title">{{ currentInteraction?.name }}</div>
+          <button class="dialog-close" @click="closeInteractionDialog">✕</button>
+        </div>
+        <div class="dialog-body">
+          <p class="dialog-text">{{ currentInteraction?.dialogue }}</p>
+        </div>
+        <div class="dialog-footer">
+          <button class="dialog-btn" @click="closeInteractionDialog">确定</button>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -93,6 +153,15 @@ const targetX = ref(10)
 const targetY = ref(7)
 const isWalking = ref(false)
 
+const hoveredTile = ref<Tile | null>(null)
+const hoveredNpc = ref<Npc | null>(null)
+const hoveredLocation = ref<Location | null>(null)
+const showPath = ref(false)
+const pathPoints = ref<{x: number, y: number}[]>([])
+
+const showInteractionDialog = ref(false)
+const currentInteraction = ref<Npc | null>(null)
+
 const playerName = computed(() => gameStore.playerData.name || '修士')
 
 const mapTiles = ref<Tile[]>([])
@@ -104,7 +173,7 @@ const npcs = ref<Npc[]>([
     sprite: '👴',
     x: 5,
     y: 3,
-    dialogue: '欢迎来到修仙世界，年轻修士！'
+    dialogue: '欢迎来到修仙世界，年轻修士！记住，修炼之路漫长而艰辛，需要持之以恒。'
   },
   {
     id: 'merchant',
@@ -112,7 +181,7 @@ const npcs = ref<Npc[]>([
     sprite: '🧑‍🌾',
     x: 15,
     y: 10,
-    dialogue: '需要购买什么材料吗？'
+    dialogue: '需要购买什么材料吗？我有各种珍稀的灵草和矿石。'
   },
   {
     id: 'disciple',
@@ -120,7 +189,7 @@ const npcs = ref<Npc[]>([
     sprite: '🧑',
     x: 8,
     y: 12,
-    dialogue: '师兄好！'
+    dialogue: '师兄好！最近修炼进展如何？'
   }
 ])
 
@@ -204,6 +273,41 @@ function getLocationStyle(location: Location) {
   }
 }
 
+function getTileIcon(type: string): string {
+  const icons: Record<string, string> = {
+    grass: '🌿',
+    water: '💧',
+    wall: '🧱',
+    tree: '🌲',
+    flower: '🌸',
+    rock: '🪨',
+    building: '🏛️'
+  }
+  return icons[type] || '❓'
+}
+
+function getTileName(type: string): string {
+  const names: Record<string, string> = {
+    grass: '草地',
+    water: '水域',
+    wall: '墙壁',
+    tree: '树木',
+    flower: '花朵',
+    rock: '岩石',
+    building: '建筑'
+  }
+  return names[type] || '未知'
+}
+
+function getLocationTypeText(type: string): string {
+  const types: Record<string, string> = {
+    building: '建筑',
+    resource: '资源点',
+    dungeon: '副本'
+  }
+  return types[type] || '地点'
+}
+
 function initializeMap() {
   mapTiles.value = []
   
@@ -240,6 +344,48 @@ function initializeMap() {
   }
 }
 
+function handleMouseMove(event: MouseEvent) {
+  if (!mapContainer.value) return
+  
+  const rect = mapContainer.value.getBoundingClientRect()
+  const x = Math.floor((event.clientX - rect.left + mapContainer.value.scrollLeft) / TILE_SIZE)
+  const y = Math.floor((event.clientY - rect.top + mapContainer.value.scrollTop) / TILE_SIZE)
+  
+  if (x >= 0 && x < MAP_WIDTH && y >= 0 && y < MAP_HEIGHT) {
+    const tile = mapTiles.value[y * MAP_WIDTH + x]
+    if (tile && tile.walkable) {
+      showPathIndicator(x, y)
+    } else {
+      showPath.value = false
+    }
+  }
+}
+
+function showPathIndicator(targetXPos: number, targetYPos: number) {
+  const points: {x: number, y: number}[] = []
+  let x = playerX.value
+  let y = playerY.value
+  
+  const dx = targetXPos - x
+  const dy = targetYPos - y
+  
+  const stepX = dx === 0 ? 0 : dx > 0 ? 1 : -1
+  const stepY = dy === 0 ? 0 : dy > 0 ? 1 : -1
+  
+  while (x !== targetXPos || y !== targetYPos) {
+    if (x !== targetXPos) x += stepX
+    else if (y !== targetYPos) y += stepY
+    
+    const tile = mapTiles.value[y * MAP_WIDTH + x]
+    if (tile && tile.walkable) {
+      points.push({ x, y })
+    }
+  }
+  
+  pathPoints.value = points
+  showPath.value = true
+}
+
 function handleMapClick(event: MouseEvent) {
   if (!mapContainer.value) return
   
@@ -265,6 +411,7 @@ function movePlayer(x: number, y: number) {
   targetX.value = x
   targetY.value = y
   isWalking.value = true
+  showPath.value = false
   
   const dx = x - playerX.value
   const dy = y - playerY.value
@@ -289,7 +436,13 @@ function movePlayer(x: number, y: number) {
 }
 
 function interactWithNpc(npc: Npc) {
-  alert(`${npc.name}: ${npc.dialogue || '你好！'}`)
+  currentInteraction.value = npc
+  showInteractionDialog.value = true
+}
+
+function closeInteractionDialog() {
+  showInteractionDialog.value = false
+  currentInteraction.value = null
 }
 
 function enterLocation(location: Location) {
@@ -323,6 +476,15 @@ function handleKeyDown(event: KeyboardEvent) {
     case 'arrowright':
       newX++
       break
+    case 'e':
+      const nearbyLocation = locations.value.find(loc => {
+        const distance = Math.abs(playerX.value - loc.x) + Math.abs(playerY.value - loc.y)
+        return distance <= 2
+      })
+      if (nearbyLocation) {
+        enterLocation(nearbyLocation)
+      }
+      return
     default:
       return
   }
@@ -371,6 +533,13 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   font-size: 16px;
+  transition: all 0.2s;
+}
+
+.tile.tile-hover {
+  filter: brightness(1.3);
+  transform: scale(1.05);
+  z-index: 10;
 }
 
 .tile.grass {
@@ -442,6 +611,22 @@ onUnmounted(() => {
   border-radius: 2px;
 }
 
+.player-indicator {
+  position: absolute;
+  top: -8px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--pixel-color-accent);
+  animation: bounce 1s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
 .player-character.walking .character-sprite {
   animation: pixel-walk 0.3s steps(2) infinite;
 }
@@ -459,6 +644,33 @@ onUnmounted(() => {
 
 .npc-character:hover {
   transform: scale(1.1);
+  z-index: 95;
+}
+
+.npc-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid var(--pixel-color-accent);
+  padding: 0.5rem;
+  white-space: nowrap;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.tooltip-name {
+  font-family: var(--pixel-font);
+  font-size: 10px;
+  color: var(--pixel-color-accent);
+  margin-bottom: 0.25rem;
+}
+
+.tooltip-hint {
+  font-family: var(--pixel-font);
+  font-size: 8px;
+  color: var(--pixel-color-secondary);
 }
 
 .map-location {
@@ -479,6 +691,7 @@ onUnmounted(() => {
   transform: scale(1.1);
   border-color: var(--pixel-color-highlight);
   box-shadow: 0 0 16px var(--pixel-color-accent);
+  z-index: 85;
 }
 
 .location-icon {
@@ -497,6 +710,54 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
+.location-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid var(--pixel-color-accent);
+  padding: 0.5rem;
+  white-space: nowrap;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.tooltip-title {
+  font-family: var(--pixel-font);
+  font-size: 10px;
+  color: var(--pixel-color-accent);
+  margin-bottom: 0.25rem;
+}
+
+.tooltip-type {
+  font-family: var(--pixel-font);
+  font-size: 8px;
+  color: var(--pixel-color-green);
+  margin-bottom: 0.25rem;
+}
+
+.path-indicator {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 70;
+}
+
+.path-point {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 204, 0, 0.3);
+  border: 2px dashed var(--pixel-color-accent);
+  animation: path-pulse 1s ease-in-out infinite;
+}
+
+@keyframes path-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
 .map-controls {
   position: absolute;
   bottom: 0;
@@ -507,11 +768,169 @@ onUnmounted(() => {
   border-top: 2px solid var(--pixel-color-secondary);
 }
 
+.control-row {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
 .control-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hint-icon {
+  font-size: 12px;
+}
+
+.hint-text {
   font-family: var(--pixel-font);
   font-size: 8px;
   color: var(--pixel-color-accent);
-  text-align: center;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.8);
+}
+
+.tile-info {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid var(--pixel-color-secondary);
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 150;
+}
+
+.info-icon {
+  font-size: 16px;
+}
+
+.info-text {
+  font-family: var(--pixel-font);
+  font-size: 10px;
+  color: var(--pixel-color-primary);
+}
+
+.info-warning {
+  font-family: var(--pixel-font);
+  font-size: 8px;
+  color: var(--pixel-color-red);
+  background: rgba(255, 0, 0, 0.2);
+  padding: 0.125rem 0.375rem;
+  border: 1px solid var(--pixel-color-red);
+}
+
+.interaction-dialog {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, var(--pixel-color-bg-light) 0%, var(--pixel-color-bg) 100%);
+  border: 4px solid var(--pixel-color-accent);
+  box-shadow: 
+    0 0 0 4px var(--pixel-color-bg-dark),
+    8px 8px 0 rgba(0, 0, 0, 0.5);
+  min-width: 300px;
+  max-width: 400px;
+  z-index: 300;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 3px solid var(--pixel-color-secondary);
+}
+
+.dialog-icon {
+  font-size: 24px;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
+}
+
+.dialog-title {
+  flex: 1;
+  font-family: var(--pixel-font);
+  font-size: 12px;
+  color: var(--pixel-color-accent);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.8);
+}
+
+.dialog-close {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pixel-color-bg-dark);
+  border: 2px solid var(--pixel-color-secondary);
+  color: var(--pixel-color-primary);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.dialog-close:hover {
+  background: var(--pixel-color-red);
+  border-color: var(--pixel-color-red-light);
+}
+
+.dialog-body {
+  padding: 1.5rem;
+}
+
+.dialog-text {
+  font-family: var(--pixel-font);
+  font-size: 10px;
+  color: var(--pixel-color-primary);
+  line-height: 1.8;
+  margin: 0;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 3px solid var(--pixel-color-secondary);
+}
+
+.dialog-btn {
+  font-family: var(--pixel-font);
+  font-size: 10px;
+  padding: 0.5rem 2rem;
+  background: linear-gradient(180deg, #f4f4f4 0%, #d4d4d4 50%, #a4a4a4 100%);
+  border: 3px solid var(--pixel-color-accent);
+  color: var(--pixel-color-bg-dark);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dialog-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+@keyframes pixel-walk {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes pixel-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
 }
 </style>
