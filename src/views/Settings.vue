@@ -176,7 +176,7 @@ function getStarStyle(index: number) {
 }
 
 function updateSettings() {
-  settingsStore.updateSettings(localSettings.value)
+  settingsStore.updateGameSettings(localSettings.value)
 }
 
 function goBack() {

@@ -163,13 +163,18 @@ const expPercent = computed(() =>
   border: 3px solid var(--pixel-color-secondary);
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
   overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.pixel-status-panel:hover {
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.4);
 }
 
 .panel-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.25rem;
+  gap: 1.25rem;
+  padding: 1.5rem;
   background: rgba(0, 0, 0, 0.2);
   border-bottom: 3px solid var(--pixel-color-secondary);
 }
@@ -241,54 +246,57 @@ const expPercent = computed(() =>
 }
 
 .stats-section {
-  padding: 1rem;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  gap: 0.5rem;
 }
 
 .stat-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.625rem;
 }
 
 .stat-icon {
-  font-size: 14px;
+  font-size: 16px;
   filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.5));
 }
 
 .stat-label {
   font-family: var(--pixel-font);
-  font-size: 8px;
+  font-size: 9px;
   color: var(--pixel-color-secondary);
+  letter-spacing: 0.5px;
 }
 
 .stat-values {
   margin-left: auto;
   font-family: var(--pixel-font);
-  font-size: 8px;
+  font-size: 9px;
   color: var(--pixel-color-primary);
+  font-weight: bold;
 }
 
 .stat-bar-container {
-  height: 12px;
+  height: 14px;
   background: rgba(0, 0, 0, 0.4);
   border: 2px solid var(--pixel-color-secondary);
   overflow: hidden;
   position: relative;
+  border-radius: 2px;
 }
 
 .stat-bar {
   height: 100%;
   position: relative;
-  transition: width 0.3s ease;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .health-bar {
@@ -313,7 +321,7 @@ const expPercent = computed(() =>
 }
 
 .attributes-section {
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
   background: rgba(0, 0, 0, 0.1);
   border-top: 2px solid var(--pixel-color-secondary);
   border-bottom: 2px solid var(--pixel-color-secondary);
@@ -322,89 +330,100 @@ const expPercent = computed(() =>
 .section-title {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
 }
 
 .title-icon {
-  font-size: 12px;
+  font-size: 14px;
   filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.5));
 }
 
 .title-text {
   font-family: var(--pixel-font);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--pixel-color-accent);
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.8);
+  letter-spacing: 1px;
 }
 
 .attributes-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .attribute-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
+  gap: 0.625rem;
+  padding: 0.75rem;
   background: rgba(0, 0, 0, 0.2);
   border: 2px solid var(--pixel-color-secondary);
+  transition: all 0.2s;
+}
+
+.attribute-item:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border-color: var(--pixel-color-accent);
+  transform: translateY(-1px);
 }
 
 .attr-icon {
-  font-size: 12px;
+  font-size: 14px;
   filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.5));
 }
 
 .attr-label {
   font-family: var(--pixel-font);
-  font-size: 8px;
+  font-size: 9px;
   color: var(--pixel-color-secondary);
   flex: 1;
 }
 
 .attr-value {
   font-family: var(--pixel-font);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--pixel-color-accent);
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.8);
+  font-weight: bold;
 }
 
 .info-section {
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .info-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.625rem;
+  padding: 0.25rem 0;
 }
 
 .info-icon {
-  font-size: 12px;
+  font-size: 14px;
   filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.5));
 }
 
 .info-label {
   font-family: var(--pixel-font);
-  font-size: 8px;
+  font-size: 9px;
   color: var(--pixel-color-secondary);
   flex: 1;
 }
 
 .info-value {
   font-family: var(--pixel-font);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--pixel-color-primary);
 }
 
 .info-value.highlight {
   color: var(--pixel-color-accent);
+  font-weight: bold;
 }
 
 .buffs-section {

@@ -28,6 +28,7 @@
         v-for="npc in npcs"
         :key="npc.id"
         class="npc-character"
+        :class="{ 'npc-nearby': isNpcNearby(npc) }"
         :style="getNpcStyle(npc)"
         @click.stop="interactWithNpc(npc)"
         @mouseenter="hoveredNpc = npc"
@@ -35,9 +36,13 @@
       >
         <div class="character-sprite">{{ npc.sprite }}</div>
         <div class="character-name">{{ npc.name }}</div>
+        <div v-if="isNpcNearby(npc)" class="npc-interaction-hint">
+          <span class="hint-key">E</span>
+          <span class="hint-action">交互</span>
+        </div>
         <div v-if="hoveredNpc === npc" class="npc-tooltip">
           <div class="tooltip-name">{{ npc.name }}</div>
-          <div class="tooltip-hint">点击交互</div>
+          <div class="tooltip-hint">{{ isNpcNearby(npc) ? '按E或点击交互' : '靠近后交互' }}</div>
         </div>
       </div>
       
@@ -45,6 +50,7 @@
         v-for="location in locations"
         :key="location.id"
         class="map-location"
+        :class="{ 'location-nearby': isLocationNearby(location) }"
         :style="getLocationStyle(location)"
         @click.stop="enterLocation(location)"
         @mouseenter="hoveredLocation = location"
@@ -52,10 +58,14 @@
       >
         <div class="location-icon">{{ location.icon }}</div>
         <div class="location-name">{{ location.name }}</div>
+        <div v-if="isLocationNearby(location)" class="location-interaction-hint">
+          <span class="hint-key">E</span>
+          <span class="hint-action">进入</span>
+        </div>
         <div v-if="hoveredLocation === location" class="location-tooltip">
           <div class="tooltip-title">{{ location.name }}</div>
           <div class="tooltip-type">{{ getLocationTypeText(location.type) }}</div>
-          <div class="tooltip-hint">点击进入</div>
+          <div class="tooltip-hint">{{ isLocationNearby(location) ? '按E或点击进入' : '需要靠近' }}</div>
         </div>
       </div>
       
@@ -166,6 +176,8 @@ const playerName = computed(() => gameStore.playerData.name || '修士')
 
 const mapTiles = ref<Tile[]>([])
 
+let moveInterval: number | null = null
+
 const npcs = ref<Npc[]>([
   {
     id: 'elder',
@@ -242,8 +254,7 @@ const mapStyle = computed(() => ({
 }))
 
 const playerStyle = computed(() => ({
-  left: `${playerX.value * TILE_SIZE}px`,
-  top: `${playerY.value * TILE_SIZE}px`,
+  transform: `translate(${playerX.value * TILE_SIZE}px, ${playerY.value * TILE_SIZE}px)`,
   width: `${TILE_SIZE}px`,
   height: `${TILE_SIZE}px`
 }))
@@ -306,6 +317,16 @@ function getLocationTypeText(type: string): string {
     dungeon: '副本'
   }
   return types[type] || '地点'
+}
+
+function isNpcNearby(npc: Npc): boolean {
+  const distance = Math.abs(playerX.value - npc.x) + Math.abs(playerY.value - npc.y)
+  return distance <= 1
+}
+
+function isLocationNearby(location: Location): boolean {
+  const distance = Math.abs(playerX.value - location.x) + Math.abs(playerY.value - location.y)
+  return distance <= 2
 }
 
 function initializeMap() {
@@ -408,6 +429,11 @@ function movePlayer(x: number, y: number) {
     return
   }
   
+  if (moveInterval) {
+    clearInterval(moveInterval)
+    moveInterval = null
+  }
+  
   targetX.value = x
   targetY.value = y
   isWalking.value = true
@@ -419,9 +445,12 @@ function movePlayer(x: number, y: number) {
   const stepX = dx === 0 ? 0 : dx > 0 ? 1 : -1
   const stepY = dy === 0 ? 0 : dy > 0 ? 1 : -1
   
-  const interval = setInterval(() => {
+  moveInterval = window.setInterval(() => {
     if (playerX.value === targetX.value && playerY.value === targetY.value) {
-      clearInterval(interval)
+      if (moveInterval) {
+        clearInterval(moveInterval)
+        moveInterval = null
+      }
       isWalking.value = false
       return
     }
@@ -432,7 +461,7 @@ function movePlayer(x: number, y: number) {
     if (playerY.value !== targetY.value) {
       playerY.value += stepY
     }
-  }, 100)
+  }, 120)
 }
 
 function interactWithNpc(npc: Npc) {
@@ -477,12 +506,16 @@ function handleKeyDown(event: KeyboardEvent) {
       newX++
       break
     case 'e':
-      const nearbyLocation = locations.value.find(loc => {
-        const distance = Math.abs(playerX.value - loc.x) + Math.abs(playerY.value - loc.y)
-        return distance <= 2
-      })
+      const nearbyNpc = npcs.value.find(npc => isNpcNearby(npc))
+      if (nearbyNpc) {
+        interactWithNpc(nearbyNpc)
+        return
+      }
+      
+      const nearbyLocation = locations.value.find(loc => isLocationNearby(loc))
       if (nearbyLocation) {
         enterLocation(nearbyLocation)
+        return
       }
       return
     default:
@@ -500,6 +533,10 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
+  if (moveInterval) {
+    clearInterval(moveInterval)
+    moveInterval = null
+  }
 })
 </script>
 
@@ -589,8 +626,9 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   z-index: 100;
-  transition: left 0.1s steps(2), top 0.1s steps(2);
+  transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  will-change: transform;
 }
 
 .character-sprite {
@@ -640,11 +678,60 @@ onUnmounted(() => {
   z-index: 90;
   cursor: pointer;
   animation: pixel-idle 2s ease-in-out infinite;
+  transition: transform 0.2s ease;
+  will-change: transform, filter;
 }
 
 .npc-character:hover {
   transform: scale(1.1);
   z-index: 95;
+}
+
+.npc-character.npc-nearby {
+  animation: npc-highlight 1.5s ease-in-out infinite;
+}
+
+@keyframes npc-highlight {
+  0%, 100% { 
+    filter: drop-shadow(0 0 4px rgba(255, 204, 0, 0.6));
+  }
+  50% { 
+    filter: drop-shadow(0 0 8px rgba(255, 204, 0, 1));
+  }
+}
+
+.npc-interaction-hint {
+  position: absolute;
+  top: -24px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid var(--pixel-color-accent);
+  padding: 2px 8px;
+  border-radius: 4px;
+  animation: hint-bounce 1s ease-in-out infinite;
+}
+
+@keyframes hint-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.hint-key {
+  font-family: var(--pixel-font);
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--pixel-color-accent);
+  background: rgba(255, 204, 0, 0.2);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.hint-action {
+  font-family: var(--pixel-font);
+  font-size: 8px;
+  color: var(--pixel-color-primary);
 }
 
 .npc-tooltip {
@@ -692,6 +779,35 @@ onUnmounted(() => {
   border-color: var(--pixel-color-highlight);
   box-shadow: 0 0 16px var(--pixel-color-accent);
   z-index: 85;
+}
+
+.map-location.location-nearby {
+  animation: location-highlight 1.5s ease-in-out infinite;
+}
+
+@keyframes location-highlight {
+  0%, 100% { 
+    border-color: var(--pixel-color-accent);
+    box-shadow: 0 0 8px rgba(255, 204, 0, 0.4);
+  }
+  50% { 
+    border-color: var(--pixel-color-highlight);
+    box-shadow: 0 0 16px rgba(255, 204, 0, 0.8);
+  }
+}
+
+.location-interaction-hint {
+  position: absolute;
+  top: -28px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid var(--pixel-color-accent);
+  padding: 2px 8px;
+  border-radius: 4px;
+  animation: hint-bounce 1s ease-in-out infinite;
+  z-index: 10;
 }
 
 .location-icon {

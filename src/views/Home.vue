@@ -39,7 +39,7 @@
           </div>
         </PixelCard>
         
-        <div class="quick-menu">
+        <div class="secondary-menu">
           <PixelButton variant="warning" size="medium" icon="⚙️" @click="openSettings">
             设置
           </PixelButton>
@@ -48,6 +48,9 @@
           </PixelButton>
           <PixelButton variant="purple" size="medium" icon="🏆" @click="openAchievements">
             成就
+          </PixelButton>
+          <PixelButton variant="secondary" size="medium" icon="📖" @click="openUpdateLog">
+            更新日志
           </PixelButton>
         </div>
       </div>
@@ -125,6 +128,10 @@ function openGuide() {
 
 function openAchievements() {
   alert('成就功能开发中...')
+}
+
+function openUpdateLog() {
+  alert('更新日志功能开发中...')
 }
 
 function getParticleStyle(index: number) {
@@ -300,16 +307,16 @@ function getParticleStyle(index: number) {
 
 .menu-buttons {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   justify-content: center;
   flex-wrap: wrap;
 }
 
-.quick-menu {
-  display: flex;
+.secondary-menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
 .info-section {

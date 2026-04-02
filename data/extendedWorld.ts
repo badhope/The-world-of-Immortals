@@ -1440,4 +1440,20 @@ export const secretRealms: SecretRealm[] = [
     history: `龙族墓地是上古时期龙族建立的。龙凤大劫后，无数龙族陨落，被埋葬于此。
 
 中古纪元，有龙族后裔进入墓地，获得了龙族传承。但墓地深处仍然有更强大的传承。`,
-    location: '
+    location: '东海龙域',
+    size: 50000,
+    entranceConditions: ['拥有龙族血脉', '达到化神期', '通过龙魂试炼'],
+    timeFlow: 0.05,
+    spiritDensity: 30,
+    dangers: ['龙魂', '龙族禁制', '龙威'],
+    treasures: ['龙族传承', '龙骨', '龙鳞'],
+    inheritances: ['龙族功法', '龙族神通'],
+    guardians: ['龙魂守护者'],
+    openingCycle: 0,
+    lastOpening: 5000,
+    nextOpening: 0,
+    currentExplorers: 0,
+    maxExplorers: 1,
+    deathRate: 0.5
+  }
+]

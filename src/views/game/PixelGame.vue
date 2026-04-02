@@ -1,27 +1,27 @@
 <template>
-  <div class="pixel-game-container">
+  <div class="pixel-game-container" role="application" aria-label="修仙世界游戏">
     <div class="top-bar">
       <div class="top-left">
         <div class="game-title">
-          <span class="title-icon">🏔️</span>
+          <span class="title-icon" aria-hidden="true">🏔️</span>
           <span class="title-text">修仙世界</span>
         </div>
       </div>
       
       <div class="top-center">
-        <div class="time-display">
+        <div class="time-display" role="status" aria-live="polite">
           <div class="time-item">
-            <span class="time-icon">📅</span>
+            <span class="time-icon" aria-hidden="true">📅</span>
             <span class="time-value">{{ gameState.year }}年{{ gameState.month }}月{{ gameState.day }}日</span>
           </div>
-          <div class="time-divider"></div>
+          <div class="time-divider" aria-hidden="true"></div>
           <div class="time-item">
-            <span class="time-icon">🌸</span>
+            <span class="time-icon" aria-hidden="true">🌸</span>
             <span class="time-value">{{ gameState.season }}</span>
           </div>
-          <div class="time-divider"></div>
+          <div class="time-divider" aria-hidden="true"></div>
           <div class="time-item highlight">
-            <span class="time-icon">⏰</span>
+            <span class="time-icon" aria-hidden="true">⏰</span>
             <span class="time-value">回合 {{ gameState.turnsRemaining }}/{{ gameState.maxTurnsPerMonth }}</span>
           </div>
         </div>
@@ -29,12 +29,12 @@
       
       <div class="top-right">
         <div class="top-actions">
-          <button class="action-btn" @click="showHelp = true" title="帮助 (H)">
-            <span class="btn-icon">❓</span>
+          <button class="action-btn" @click="showHelp = true" title="帮助 (H)" aria-label="打开帮助">
+            <span class="btn-icon" aria-hidden="true">❓</span>
             <span class="btn-text">帮助</span>
           </button>
-          <button class="action-btn" @click="showMenu = true" title="菜单 (ESC)">
-            <span class="btn-icon">☰</span>
+          <button class="action-btn" @click="showMenu = true" title="菜单 (ESC)" aria-label="打开菜单">
+            <span class="btn-icon" aria-hidden="true">☰</span>
             <span class="btn-text">菜单</span>
           </button>
         </div>
@@ -107,28 +107,28 @@
         
         <div class="action-bar">
           <div class="action-buttons">
-            <button class="action-button primary" @click="openCultivation" title="修炼 (C)">
-              <span class="button-icon">🧘</span>
+            <button class="action-button primary" @click="openCultivation" title="修炼 (C)" aria-label="修炼">
+              <span class="button-icon" aria-hidden="true">🧘</span>
               <span class="button-text">修炼</span>
               <span class="button-hint">C</span>
             </button>
-            <button class="action-button success" @click="openExploration" title="探索 (X)">
-              <span class="button-icon">🗺️</span>
+            <button class="action-button success" @click="openExploration" title="探索 (X)" aria-label="探索">
+              <span class="button-icon" aria-hidden="true">🗺️</span>
               <span class="button-text">探索</span>
               <span class="button-hint">X</span>
             </button>
-            <button class="action-button warning" @click="openCrafting" title="炼制 (V)">
-              <span class="button-icon">⚗️</span>
+            <button class="action-button warning" @click="openCrafting" title="炼制 (V)" aria-label="炼制">
+              <span class="button-icon" aria-hidden="true">⚗️</span>
               <span class="button-text">炼制</span>
               <span class="button-hint">V</span>
             </button>
-            <button class="action-button info" @click="openInventory" title="背包 (I)">
-              <span class="button-icon">🎒</span>
+            <button class="action-button info" @click="openInventory" title="背包 (I)" aria-label="背包">
+              <span class="button-icon" aria-hidden="true">🎒</span>
               <span class="button-text">背包</span>
               <span class="button-hint">I</span>
             </button>
-            <button class="action-button purple" @click="openQuests" title="任务 (Q)">
-              <span class="button-icon">📜</span>
+            <button class="action-button purple" @click="openQuests" title="任务 (Q)" aria-label="任务">
+              <span class="button-icon" aria-hidden="true">📜</span>
               <span class="button-text">任务</span>
               <span class="button-hint">Q</span>
             </button>
@@ -294,6 +294,12 @@
       <span class="notification-icon">{{ notification.icon }}</span>
       <span class="notification-message">{{ notification.message }}</span>
     </div>
+    
+    <TutorialGuide 
+      :show="showTutorial" 
+      @close="closeTutorial"
+      @complete="completeTutorial"
+    />
   </div>
 </template>
 
@@ -303,14 +309,16 @@ import { useRouter } from 'vue-router'
 import { useGameSystemStore } from '@/stores/gameSystem'
 import PixelMap from '@/components/game/PixelMap.vue'
 import PixelStatusPanel from '@/components/game/PixelStatusPanel.vue'
+import TutorialGuide from '@/components/guide/TutorialGuide.vue'
 
 const router = useRouter()
 const gameStore = useGameSystemStore()
-const mapRef = ref<InstanceType<typeof PixelMap> | null>(null)
+const mapRef = ref<InstanceType<typeof PixelMap> | null>( null )
 
 const showMenu = ref(false)
 const showHelp = ref(false)
 const showSettings = ref(false)
+const showTutorial = ref(false)
 
 const notification = ref({
   show: false,
@@ -386,16 +394,38 @@ function study() {
 }
 
 function saveGame() {
-  showNotification('success', '💾', '游戏已保存！')
+  const success = gameStore.saveGame(0)
+  if (success) {
+    showNotification('success', '💾', '游戏已保存！')
+  } else {
+    showNotification('error', '❌', '保存失败，请重试')
+  }
   showMenu.value = false
 }
 
 function loadGame() {
-  showNotification('info', '📂', '读取游戏功能开发中...')
+  const success = gameStore.loadGame(0)
+  if (success) {
+    showNotification('success', '📂', '游戏已读取！')
+  } else {
+    showNotification('error', '❌', '读取失败，没有找到存档')
+  }
+  showMenu.value = false
 }
 
 function goBack() {
   router.push('/')
+}
+
+function closeTutorial() {
+  showTutorial.value = false
+  localStorage.setItem('immortal_tutorial_completed', 'true')
+}
+
+function completeTutorial() {
+  showTutorial.value = false
+  localStorage.setItem('immortal_tutorial_completed', 'true')
+  showNotification('success', '🎉', '新手引导完成！祝你在修仙世界玩得愉快！')
 }
 
 function handleKeyDown(event: KeyboardEvent) {
@@ -426,11 +456,22 @@ function handleKeyDown(event: KeyboardEvent) {
 
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown)
+  gameStore.startAutoSave(5)
+  
+  const tutorialCompleted = localStorage.getItem('immortal_tutorial_completed')
+  if (!tutorialCompleted) {
+    setTimeout(() => {
+      showTutorial.value = true
+    }, 1000)
+  }
+  
   showNotification('info', '🎮', '欢迎来到修仙世界！按H查看帮助')
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown)
+  gameStore.stopAutoSave()
+  gameStore.saveOnEvent()
 })
 </script>
 
@@ -571,33 +612,40 @@ onUnmounted(() => {
 .main-game-area {
   flex: 1;
   display: flex;
-  gap: 1.5rem;
-  padding: 1.5rem;
+  gap: 2.5rem;
+  padding: 2.5rem;
   overflow: hidden;
 }
 
 .left-panel {
-  width: 280px;
+  width: 300px;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
   overflow-y: auto;
+  padding-right: 0.5rem;
 }
 
 .quick-stats {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1.25rem;
 }
 
 .stat-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 1.25rem;
+  padding: 1.25rem;
   background: linear-gradient(135deg, var(--pixel-color-bg-light) 0%, var(--pixel-color-bg) 100%);
   border: 3px solid var(--pixel-color-secondary);
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.4);
 }
 
 .stat-icon {
@@ -627,8 +675,9 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
   overflow: hidden;
+  min-width: 0;
 }
 
 .map-wrapper {
@@ -639,6 +688,11 @@ onUnmounted(() => {
   border: 4px solid var(--pixel-color-secondary);
   box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.3);
   overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.map-wrapper:hover {
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.4);
 }
 
 .map-header {
@@ -737,9 +791,10 @@ onUnmounted(() => {
 
 .action-buttons {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   justify-content: center;
   flex-wrap: wrap;
+  padding: 0.5rem;
 }
 
 .action-button {
@@ -747,19 +802,40 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  padding: 1rem 1.5rem;
+  padding: 1.25rem 1.75rem;
   background: var(--pixel-color-bg-light);
   border: 4px solid var(--pixel-color-secondary);
   color: var(--pixel-color-primary);
   cursor: pointer;
-  transition: all 0.2s;
-  min-width: 100px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 110px;
   position: relative;
+  overflow: hidden;
+}
+
+.action-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.action-button:hover::before {
+  left: 100%;
 }
 
 .action-button:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  transform: translateY(-6px) scale(1.05);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+.action-button:active {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
 .action-button.primary {
@@ -812,11 +888,12 @@ onUnmounted(() => {
 }
 
 .right-panel {
-  width: 280px;
+  width: 300px;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
   overflow-y: auto;
+  padding-left: 0.5rem;
 }
 
 .panel-section {
@@ -824,6 +901,11 @@ onUnmounted(() => {
   border: 3px solid var(--pixel-color-secondary);
   box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
   overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.panel-section:hover {
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.4);
 }
 
 .section-header {
@@ -876,47 +958,97 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.75rem;
+  gap: 0.375rem;
+  padding: 1rem;
   background: var(--pixel-color-bg-dark);
   border: 2px solid var(--pixel-color-secondary);
   color: var(--pixel-color-primary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.quick-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 204, 0, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s, height 0.4s;
+}
+
+.quick-btn:hover::after {
+  width: 150%;
+  height: 150%;
 }
 
 .quick-btn:hover {
   background: var(--pixel-color-accent);
   color: var(--pixel-color-bg-dark);
   border-color: var(--pixel-color-highlight);
-  transform: scale(1.05);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.quick-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
 }
 
 .quick-btn .btn-icon {
-  font-size: 20px;
+  font-size: 22px;
   filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.5));
+  position: relative;
+  z-index: 1;
 }
 
 .quick-btn .btn-text {
   font-family: var(--pixel-font);
-  font-size: 8px;
+  font-size: 9px;
+  position: relative;
+  z-index: 1;
 }
 
 .event-log {
-  max-height: 200px;
+  max-height: 220px;
   overflow-y: auto;
-  padding: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .log-item {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: 0.75rem;
+  padding: 0.75rem;
   background: rgba(0, 0, 0, 0.2);
   border-left: 3px solid var(--pixel-color-secondary);
   font-family: var(--pixel-font);
-  font-size: 8px;
+  font-size: 9px;
+  transition: all 0.2s;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.log-item:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border-left-color: var(--pixel-color-accent);
 }
 
 .log-item.info {
@@ -1120,22 +1252,24 @@ onUnmounted(() => {
 
 .notification {
   position: fixed;
-  top: 2rem;
-  right: 2rem;
+  top: 2.5rem;
+  right: 2.5rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.5rem;
-  background: var(--pixel-color-bg-light);
-  border: 3px solid var(--pixel-color-secondary);
-  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.3);
+  gap: 1rem;
+  padding: 1.25rem 2rem;
+  background: linear-gradient(135deg, var(--pixel-color-bg-light) 0%, var(--pixel-color-bg) 100%);
+  border: 4px solid var(--pixel-color-secondary);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.4);
   z-index: 2000;
-  animation: slideInRight 0.3s ease-out;
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 280px;
+  max-width: 400px;
 }
 
 @keyframes slideInRight {
   from {
-    transform: translateX(100%);
+    transform: translateX(120%);
     opacity: 0;
   }
   to {
@@ -1146,30 +1280,45 @@ onUnmounted(() => {
 
 .notification.info {
   border-color: var(--pixel-color-blue);
+  background: linear-gradient(135deg, rgba(65, 166, 246, 0.1) 0%, var(--pixel-color-bg) 100%);
 }
 
 .notification.success {
   border-color: var(--pixel-color-green);
+  background: linear-gradient(135deg, rgba(56, 183, 100, 0.1) 0%, var(--pixel-color-bg) 100%);
 }
 
 .notification.warning {
   border-color: var(--pixel-color-yellow);
+  background: linear-gradient(135deg, rgba(255, 212, 59, 0.1) 0%, var(--pixel-color-bg) 100%);
 }
 
 .notification.error {
   border-color: var(--pixel-color-red);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, var(--pixel-color-bg) 100%);
 }
 
 .notification-icon {
-  font-size: 20px;
-  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.5));
+  font-size: 24px;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 .notification-message {
   font-family: var(--pixel-font);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--pixel-color-primary);
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.8);
+  line-height: 1.5;
 }
 
 @media (max-width: 1200px) {

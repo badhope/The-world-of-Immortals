@@ -157,7 +157,7 @@ onMounted(() => {
 })
 
 function updateSettings() {
-  settingsStore.updateSettings(localSettings.value)
+  settingsStore.updateGameSettings(localSettings.value)
 }
 
 async function saveGame() {

@@ -14,13 +14,24 @@
         <PixelButton variant="secondary" size="small" icon="⬅️" @click="goBack">
           返回
         </PixelButton>
-        <h1 class="page-title pixel-title">创建角色</h1>
-        <div class="step-indicator">
-          <div :class="['step', { active: currentStep >= 1 }]">1</div>
-          <div class="step-line"></div>
-          <div :class="['step', { active: currentStep >= 2 }]">2</div>
-          <div class="step-line"></div>
-          <div :class="['step', { active: currentStep >= 3 }]">3</div>
+        <div class="title-container">
+          <h1 class="page-title pixel-title">创建角色</h1>
+          <div class="step-indicator">
+            <div :class="['step', { active: currentStep >= 1, completed: currentStep > 1 }]">
+              <div class="step-number">1</div>
+              <div class="step-label">角色信息</div>
+            </div>
+            <div class="step-line" :class="{ active: currentStep >= 2 }"></div>
+            <div :class="['step', { active: currentStep >= 2, completed: currentStep > 2 }]">
+              <div class="step-number">2</div>
+              <div class="step-label">选择出身</div>
+            </div>
+            <div class="step-line" :class="{ active: currentStep >= 3 }"></div>
+            <div :class="['step', { active: currentStep >= 3 }]">
+              <div class="step-number">3</div>
+              <div class="step-label">属性分配</div>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -219,7 +230,7 @@ const character = ref({
     intelligence: 5,
     constitution: 5,
     charisma: 5
-  }
+  } as Record<string, number>
 })
 
 const avatarOptions = ['🧙', '🧝', '🧛', '🧟', '👨', '👩', '🧑', '👴', '👵']
@@ -397,48 +408,96 @@ function getSymbolStyle(index: number) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.title-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 1rem;
 }
 
 .page-title {
-  font-size: 24px;
+  font-size: 28px;
   text-shadow: 
     4px 4px 0 rgba(0, 0, 0, 0.8),
     0 0 20px rgba(255, 204, 0, 0.5);
-  letter-spacing: 2px;
+  letter-spacing: 3px;
 }
 
 .step-indicator {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .step {
-  width: 32px;
-  height: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--pixel-font);
-  font-size: 12px;
+  font-size: 16px;
+  font-weight: bold;
   background: var(--pixel-color-bg-light);
-  border: 3px solid var(--pixel-color-secondary);
+  border: 4px solid var(--pixel-color-secondary);
   color: var(--pixel-color-secondary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.step-label {
+  font-family: var(--pixel-font);
+  font-size: 10px;
+  color: var(--pixel-color-secondary);
+  text-align: center;
+  opacity: 0.7;
   transition: all 0.3s;
 }
 
-.step.active {
+.step.active .step-number {
   background: var(--pixel-color-accent);
   border-color: var(--pixel-color-highlight);
   color: var(--pixel-color-bg-dark);
-  box-shadow: 0 0 12px rgba(255, 204, 0, 0.5);
+  box-shadow: 0 0 16px rgba(255, 204, 0, 0.6);
+  transform: scale(1.1);
+}
+
+.step.active .step-label {
+  color: var(--pixel-color-accent);
+  opacity: 1;
+  font-weight: bold;
+}
+
+.step.completed .step-number {
+  background: var(--pixel-color-green);
+  border-color: var(--pixel-color-green);
+  color: var(--pixel-color-bg-dark);
+}
+
+.step.completed .step-label {
+  color: var(--pixel-color-green);
+  opacity: 1;
 }
 
 .step-line {
-  width: 40px;
-  height: 3px;
+  width: 60px;
+  height: 4px;
   background: var(--pixel-color-secondary);
+  transition: all 0.3s;
+}
+
+.step-line.active {
+  background: linear-gradient(90deg, var(--pixel-color-green) 0%, var(--pixel-color-accent) 100%);
 }
 
 .main-content {

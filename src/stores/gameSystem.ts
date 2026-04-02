@@ -476,6 +476,103 @@ export const useGameSystemStore = defineStore('gameSystem', () => {
     return true
   }
 
+  function saveGame(slot: number = 0) {
+    const saveData = {
+      gameState: gameState.value,
+      playerData: playerData.value,
+      mapLocations: mapLocations.value,
+      timestamp: Date.now(),
+      version: '1.0.0'
+    }
+    
+    try {
+      localStorage.setItem(`immortal_save_${slot}`, JSON.stringify(saveData))
+      return true
+    } catch (error) {
+      console.error('保存游戏失败:', error)
+      return false
+    }
+  }
+
+  function loadGame(slot: number = 0) {
+    try {
+      const saveDataStr = localStorage.getItem(`immortal_save_${slot}`)
+      if (!saveDataStr) return false
+      
+      const saveData = JSON.parse(saveDataStr)
+      
+      if (saveData.version !== '1.0.0') {
+        console.warn('存档版本不匹配')
+        return false
+      }
+      
+      gameState.value = saveData.gameState
+      playerData.value = saveData.playerData
+      mapLocations.value = saveData.mapLocations
+      
+      return true
+    } catch (error) {
+      console.error('加载游戏失败:', error)
+      return false
+    }
+  }
+
+  function hasSaveData(slot: number = 0): boolean {
+    return localStorage.getItem(`immortal_save_${slot}`) !== null
+  }
+
+  function deleteSave(slot: number = 0) {
+    try {
+      localStorage.removeItem(`immortal_save_${slot}`)
+      return true
+    } catch (error) {
+      console.error('删除存档失败:', error)
+      return false
+    }
+  }
+
+  function getSaveInfo(slot: number = 0) {
+    try {
+      const saveDataStr = localStorage.getItem(`immortal_save_${slot}`)
+      if (!saveDataStr) return null
+      
+      const saveData = JSON.parse(saveDataStr)
+      return {
+        playerName: saveData.playerData.name,
+        realm: saveData.playerData.cultivation.realm.name,
+        year: saveData.gameState.year,
+        month: saveData.gameState.month,
+        timestamp: saveData.timestamp
+      }
+    } catch (error) {
+      return null
+    }
+  }
+
+  let autoSaveInterval: number | null = null
+
+  function startAutoSave(intervalMinutes: number = 5) {
+    if (autoSaveInterval) {
+      clearInterval(autoSaveInterval)
+    }
+    
+    autoSaveInterval = window.setInterval(() => {
+      saveGame(0)
+      console.log('游戏已自动保存')
+    }, intervalMinutes * 60 * 1000)
+  }
+
+  function stopAutoSave() {
+    if (autoSaveInterval) {
+      clearInterval(autoSaveInterval)
+      autoSaveInterval = null
+    }
+  }
+
+  function saveOnEvent() {
+    saveGame(0)
+  }
+
   return {
     gameState,
     playerData,
@@ -488,6 +585,14 @@ export const useGameSystemStore = defineStore('gameSystem', () => {
     cultivate,
     exploreLocation,
     craftPill,
-    usePill
+    usePill,
+    saveGame,
+    loadGame,
+    hasSaveData,
+    deleteSave,
+    getSaveInfo,
+    startAutoSave,
+    stopAutoSave,
+    saveOnEvent
   }
 })
