@@ -133,6 +133,11 @@ export interface Player {
   maxHealth: number
   karma: number
   reputation: Record<string, number>
+  wealth?: number
+  insight?: number
+  virtue?: number
+  demonic?: number
+  cultivationLevel?: number
 }
 
 export interface PlayerRealm {

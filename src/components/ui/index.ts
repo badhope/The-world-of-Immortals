@@ -1,0 +1,6 @@
+export { default as GameButton } from './GameButton.vue'
+export { default as GameCard } from './GameCard.vue'
+export { default as GameProgress } from './GameProgress.vue'
+export { default as GameSidebar } from './GameSidebar.vue'
+export { default as GameResourceBar } from './GameResourceBar.vue'
+export { default as GameNotification } from './GameNotification.vue'

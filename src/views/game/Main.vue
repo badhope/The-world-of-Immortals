@@ -1,149 +1,92 @@
-<template>
-  <div class="main-view">
-    <div class="welcome-section card">
-      <div class="welcome-header">
-        <span class="welcome-icon">{{ currentLocation?.icon || '🏠' }}</span>
-        <div class="welcome-text">
-          <h2 class="welcome-title">{{ currentLocation?.name || '未知之地' }}</h2>
-          <p class="welcome-desc">{{ currentLocation?.description || '一片神秘的区域...' }}</p>
-        </div>
-      </div>
-    </div>
-    
-    <div class="action-grid">
-      <div class="action-card" @click="goExplore">
-        <div class="card-glow"></div>
-        <div class="action-icon">🗺️</div>
-        <div class="action-content">
-          <div class="action-title">探索世界</div>
-          <div class="action-desc">前往新地点，发现奇遇</div>
-        </div>
-      </div>
-      
-      <div class="action-card" @click="goInventory">
-        <div class="card-glow"></div>
-        <div class="action-icon">🎒</div>
-        <div class="action-content">
-          <div class="action-title">背包</div>
-          <div class="action-desc">查看物品与装备</div>
-        </div>
-      </div>
-      
-      <div class="action-card" @click="goCrafting">
-        <div class="card-glow"></div>
-        <div class="action-icon">⚗️</div>
-        <div class="action-content">
-          <div class="action-title">炼制</div>
-          <div class="action-desc">炼丹炼器，提升实力</div>
-        </div>
-      </div>
-      
-      <div class="action-card" @click="goBuildings">
-        <div class="card-glow"></div>
-        <div class="action-icon">🏛️</div>
-        <div class="action-content">
-          <div class="action-title">洞府</div>
-          <div class="action-desc">建设修炼之所</div>
-        </div>
-      </div>
-      
-      <div class="action-card" @click="goCultivation">
-        <div class="card-glow"></div>
-        <div class="action-icon">🧘</div>
-        <div class="action-content">
-          <div class="action-title">修炼</div>
-          <div class="action-desc">提升境界，突破瓶颈</div>
-        </div>
-      </div>
-      
-      <div class="action-card" @click="rest">
-        <div class="card-glow"></div>
-        <div class="action-icon">💤</div>
-        <div class="action-content">
-          <div class="action-title">休息</div>
-          <div class="action-desc">恢复生命与灵力</div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="quick-actions card">
-      <div class="card-header">
-        <h3 class="card-title">快速行动</h3>
-      </div>
-      <div class="quick-buttons">
-        <button 
-          class="btn btn-primary" 
-          @click="gather" 
-          :disabled="isGathering"
-        >
-          <span v-if="isGathering">采集中...</span>
-          <span v-else>🌿 采集资源</span>
-        </button>
-        <button 
-          class="btn" 
-          @click="meditate" 
-          :disabled="isMeditating"
-        >
-          <span v-if="isMeditating">冥想中...</span>
-          <span v-else>✨ 冥想感悟</span>
-        </button>
-      </div>
-    </div>
-    
-    <div class="player-overview card" v-if="currentLocation?.resources?.length">
-      <div class="card-header">
-        <h3 class="card-title">此地资源</h3>
-      </div>
-      <div class="resource-list">
-        <div 
-          v-for="resource in currentLocation.resources" 
-          :key="resource.type" 
-          class="resource-item"
-        >
-          <span class="resource-icon">{{ getResourceIcon(resource.type) }}</span>
-          <span class="resource-name">{{ getResourceName(resource.type) }}</span>
-          <span class="resource-abundance">{{ getAbundanceText(resource.abundance) }}</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/game'
-import { locations } from '../../../data/locations'
-import { items } from '../../../data/items'
+import { ScrollCard, SealButton } from '@/components/scroll'
 
 const router = useRouter()
 const gameStore = useGameStore()
 
-const currentLocation = computed(() => locations[gameStore.player.location])
+const currentLocation = computed(() => {
+  const locations: Record<string, { name: string; icon: string; description: string; resources?: { type: string; abundance: number }[] }> = {
+    'qingyun-mountain': { 
+      name: '青云山', 
+      icon: '⛰️', 
+      description: '青云宗所在之地，灵气充裕，山势险峻，云雾缭绕。此处常有修士往来，也有不少灵兽出没。',
+      resources: [
+        { type: 'herb', abundance: 0.7 },
+        { type: 'ore', abundance: 0.5 },
+        { type: 'spirit_stone', abundance: 0.3 }
+      ]
+    },
+    'default': { 
+      name: '未知之地', 
+      icon: '❓', 
+      description: '一片神秘的区域，充满了未知的危险与机遇...',
+      resources: []
+    }
+  }
+  return locations[gameStore.player.location] || locations['default']
+})
+
 const isGathering = ref(false)
 const isMeditating = ref(false)
 
-function goExplore() {
-  router.push('/game/explore')
-}
+const mainActions = [
+  { id: 'explore', icon: '🗺️', title: '探索', desc: '前往新地点' },
+  { id: 'cultivation', icon: '🧘', title: '修炼', desc: '提升境界' },
+  { id: 'inventory', icon: '🎒', title: '背包', desc: '物品装备' },
+  { id: 'crafting', icon: '⚗️', title: '炼制', desc: '炼丹炼器' },
+  { id: 'buildings', icon: '🏛️', title: '洞府', desc: '建设居所' },
+  { id: 'world', icon: '🌍', title: '世界', desc: '查看世界' }
+]
 
-function goInventory() {
-  router.push('/game/inventory')
-}
+const quickActions = [
+  { id: 'gather', icon: '🌿', title: '采集', variant: 'primary' as const },
+  { id: 'meditate', icon: '✨', title: '冥想', variant: 'default' as const },
+  { id: 'rest', icon: '💤', title: '休息', variant: 'default' as const },
+  { id: 'observe', icon: '👁️', title: '观察', variant: 'default' as const }
+]
 
-function goCrafting() {
-  router.push('/game/crafting')
-}
-
-function goBuildings() {
-  router.push('/game/buildings')
-}
-
-function goCultivation() {
-  router.push('/game/cultivation')
+function handleAction(actionId: string) {
+  switch (actionId) {
+    case 'explore':
+      router.push('/game/explore')
+      break
+    case 'cultivation':
+      router.push('/game/cultivation')
+      break
+    case 'inventory':
+      router.push('/game/inventory')
+      break
+    case 'crafting':
+      router.push('/game/crafting')
+      break
+    case 'buildings':
+      router.push('/game/buildings')
+      break
+    case 'world':
+      router.push('/game/world')
+      break
+    case 'gather':
+      gather()
+      break
+    case 'meditate':
+      meditate()
+      break
+    case 'rest':
+      rest()
+      break
+    case 'observe':
+      observe()
+      break
+  }
 }
 
 function rest() {
+  const healthBefore = gameStore.player.health
+  const spiritBefore = gameStore.player.spirit
+  
   gameStore.player.health = gameStore.player.maxHealth
   gameStore.player.spirit = gameStore.player.maxSpirit
   gameStore.advanceTime()
@@ -151,7 +94,7 @@ function rest() {
   gameStore.addEvent({
     id: `rest_${Date.now()}`,
     title: '休息',
-    description: '你休息了一天，恢复了全部生命和灵力',
+    description: `生命 +${gameStore.player.maxHealth - healthBefore}，灵力 +${gameStore.player.maxSpirit - spiritBefore}`,
     type: 'story',
     choices: [],
     timestamp: Date.now()
@@ -181,29 +124,20 @@ async function gather() {
   const resource = location.resources[Math.floor(Math.random() * location.resources.length)]
   const gatherCount = Math.floor(Math.random() * 3) + 1
   
-  const item = Object.values(items).find(i => i.id === resource.type || i.tags?.includes(resource.type))
-  
-  if (item) {
-    gameStore.addItem(item.id, gatherCount)
-    gameStore.addEvent({
-      id: `gather_${Date.now()}`,
-      title: '采集成功',
-      description: `你采集到了 ${item.name} x${gatherCount}`,
-      type: 'discovery',
-      choices: [],
-      timestamp: Date.now()
-    })
-  } else {
-    gameStore.addItem('spirit_stone_low', gatherCount)
-    gameStore.addEvent({
-      id: `gather_${Date.now()}`,
-      title: '采集成功',
-      description: `你采集到了 下品灵石 x${gatherCount}`,
-      type: 'discovery',
-      choices: [],
-      timestamp: Date.now()
-    })
+  const resourceNames: Record<string, string> = {
+    herb: '灵草',
+    ore: '矿石',
+    spirit_stone: '下品灵石'
   }
+  
+  gameStore.addEvent({
+    id: `gather_${Date.now()}`,
+    title: '采集成功',
+    description: `获得 ${resourceNames[resource.type] || resource.type} x${gatherCount}`,
+    type: 'discovery',
+    choices: [],
+    timestamp: Date.now()
+  })
   
   isGathering.value = false
 }
@@ -213,7 +147,7 @@ async function meditate() {
   
   isMeditating.value = true
   
-  await new Promise(resolve => setTimeout(resolve, 2000))
+  await new Promise(resolve => setTimeout(resolve, 1500))
   
   const expGain = Math.floor(Math.random() * 20) + 10
   gameStore.addExp(expGain)
@@ -221,13 +155,34 @@ async function meditate() {
   gameStore.addEvent({
     id: `meditate_${Date.now()}`,
     title: '冥想感悟',
-    description: `你进入冥想状态，获得了 ${expGain} 点修炼经验`,
+    description: `修为 +${expGain}`,
     type: 'cultivation',
     choices: [],
     timestamp: Date.now()
   })
   
   isMeditating.value = false
+}
+
+function observe() {
+  const observations = [
+    '你注意到远处有一道灵光闪过',
+    '空气中弥漫着淡淡的药香',
+    '地面上有一些奇怪的脚印',
+    '你感受到附近有灵气波动',
+    '隐约听到远处传来兽吼'
+  ]
+  
+  const observation = observations[Math.floor(Math.random() * observations.length)]
+  
+  gameStore.addEvent({
+    id: `observe_${Date.now()}`,
+    title: '观察四周',
+    description: observation,
+    type: 'story',
+    choices: [],
+    timestamp: Date.now()
+  })
 }
 
 function getResourceIcon(type: string): string {
@@ -255,177 +210,368 @@ function getResourceName(type: string): string {
 }
 
 function getAbundanceText(abundance: number): string {
-  if (abundance >= 0.8) return '丰富'
-  if (abundance >= 0.5) return '一般'
+  if (abundance >= 0.7) return '丰富'
+  if (abundance >= 0.4) return '一般'
   return '稀少'
 }
 </script>
 
+<template>
+  <div class="scroll-main-view">
+    <div class="content-area">
+      <div class="top-section">
+        <ScrollCard variant="gold" class="location-card">
+          <div class="location-header">
+            <span class="location-icon">{{ currentLocation.icon }}</span>
+            <div class="location-info">
+              <h2 class="location-title">{{ currentLocation.name }}</h2>
+              <p class="location-desc">{{ currentLocation.description }}</p>
+            </div>
+          </div>
+          
+          <div v-if="currentLocation.resources?.length" class="location-resources">
+            <div class="resources-label">此地资源</div>
+            <div class="resources-tags">
+              <span 
+                v-for="resource in currentLocation.resources" 
+                :key="resource.type"
+                class="resource-tag"
+              >
+                <span class="tag-icon">{{ getResourceIcon(resource.type) }}</span>
+                <span class="tag-name">{{ getResourceName(resource.type) }}</span>
+                <span class="tag-abundance" :class="{
+                  'abundance-high': resource.abundance >= 0.7,
+                  'abundance-medium': resource.abundance >= 0.4 && resource.abundance < 0.7,
+                  'abundance-low': resource.abundance < 0.4
+                }">{{ getAbundanceText(resource.abundance) }}</span>
+              </span>
+            </div>
+          </div>
+        </ScrollCard>
+      </div>
+
+      <div class="middle-section">
+        <div class="section-header">
+          <h3 class="section-title">主要行动</h3>
+        </div>
+        
+        <div class="actions-grid">
+          <div 
+            v-for="action in mainActions" 
+            :key="action.id"
+            class="action-item"
+            @click="handleAction(action.id)"
+          >
+            <SealButton size="lg" variant="default">
+              {{ action.title }}
+            </SealButton>
+            <div class="action-label">{{ action.desc }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-section">
+        <div class="section-header">
+          <h3 class="section-title">快速行动</h3>
+        </div>
+        
+        <div class="quick-actions">
+          <div 
+            v-for="action in quickActions" 
+            :key="action.id"
+            class="quick-item"
+            @click="handleAction(action.id)"
+          >
+            <SealButton 
+              size="md" 
+              :variant="action.variant"
+              :loading="isGathering && action.id === 'gather' || isMeditating && action.id === 'meditate'"
+              :disabled="isGathering && action.id === 'gather' || isMeditating && action.id === 'meditate'"
+            >
+              {{ action.title }}
+            </SealButton>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-section">
+        <ScrollCard variant="light" class="status-card">
+          <div class="status-grid">
+            <div class="status-item">
+              <span class="status-icon">❤️</span>
+              <div class="status-info">
+                <div class="status-label">生命</div>
+                <div class="status-value">{{ gameStore.player.health }}/{{ gameStore.player.maxHealth }}</div>
+              </div>
+            </div>
+            
+            <div class="status-divider"></div>
+            
+            <div class="status-item">
+              <span class="status-icon">💫</span>
+              <div class="status-info">
+                <div class="status-label">灵力</div>
+                <div class="status-value">{{ gameStore.player.spirit }}/{{ gameStore.player.maxSpirit }}</div>
+              </div>
+            </div>
+            
+            <div class="status-divider"></div>
+            
+            <div class="status-item">
+              <span class="status-icon">⭐</span>
+              <div class="status-info">
+                <div class="status-label">修为</div>
+                <div class="status-value">{{ gameStore.player.realm?.exp || 0 }}</div>
+              </div>
+            </div>
+          </div>
+        </ScrollCard>
+      </div>
+    </div>
+  </div>
+</template>
+
 <style scoped>
-.main-view {
-  padding: 1.5rem;
-  overflow-y: auto;
+.scroll-main-view {
   height: 100%;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.content-area {
+  max-width: 900px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 2rem;
 }
 
-.welcome-section {
-  padding: 1.25rem;
+.top-section {
+  margin-bottom: 0.5rem;
 }
 
-.welcome-header {
+.location-card {
+  width: 100%;
+}
+
+.location-header {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
 }
 
-.welcome-icon {
-  font-size: 2.5rem;
+.location-icon {
+  font-size: 4rem;
+  flex-shrink: 0;
 }
 
-.welcome-text {
+.location-info {
   flex: 1;
 }
 
-.welcome-title {
+.location-title {
   font-family: var(--font-title);
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-2xl);
   font-weight: 600;
-  color: var(--color-text-primary);
-  margin-bottom: 0.25rem;
+  color: var(--color-gold);
+  margin-bottom: 0.75rem;
 }
 
-.welcome-desc {
+.location-desc {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-  line-height: 1.5;
+  line-height: 1.8;
 }
 
-.action-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
+.location-resources {
+  padding-top: 1rem;
+  border-top: 1px dashed var(--color-border-accent);
 }
 
-.action-card {
-  position: relative;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1.25rem 1rem;
-  background: linear-gradient(135deg, var(--color-bg-card), var(--color-bg-secondary));
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  transition: all var(--transition-normal);
-  overflow: hidden;
-}
-
-.card-glow {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, rgba(212, 175, 55, 0.1), transparent 70%);
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-
-.action-card:hover {
-  transform: translateY(-3px);
-  border-color: var(--color-gold-dark);
-  box-shadow: var(--shadow-glow);
-}
-
-.action-card:hover .card-glow {
-  opacity: 1;
-}
-
-.action-icon {
-  font-size: 2rem;
-  margin-bottom: 0.75rem;
-  z-index: 1;
-}
-
-.action-content {
-  text-align: center;
-  z-index: 1;
-}
-
-.action-title {
+.resources-label {
   font-family: var(--font-title);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin-bottom: 0.25rem;
-}
-
-.action-desc {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-muted);
-}
-
-.quick-actions {
-  padding: 1rem;
-}
-
-.quick-actions .card-header {
   margin-bottom: 0.75rem;
 }
 
-.quick-actions .card-title {
-  font-size: var(--font-size-base);
-}
-
-.quick-buttons {
+.resources-tags {
   display: flex;
-  gap: 0.75rem;
-}
-
-.quick-buttons .btn {
-  flex: 1;
-  padding: 0.625rem 1rem;
-}
-
-.player-overview {
-  padding: 1rem;
-}
-
-.player-overview .card-header {
-  margin-bottom: 0.75rem;
-}
-
-.player-overview .card-title {
-  font-size: var(--font-size-base);
-}
-
-.resource-list {
-  display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.resource-item {
+.resource-tag {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  background-color: var(--color-bg-tertiary);
-  border-radius: var(--radius-sm);
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
 }
 
-.resource-icon {
+.tag-icon {
   font-size: 1rem;
 }
 
-.resource-name {
-  flex: 1;
+.tag-name {
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
 }
 
-.resource-abundance {
+.tag-abundance {
   font-size: var(--font-size-xs);
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.abundance-high {
+  background: rgba(64, 160, 128, 0.2);
+  color: var(--color-jade-light);
+}
+
+.abundance-medium {
+  background: rgba(212, 175, 55, 0.2);
   color: var(--color-gold);
+}
+
+.abundance-low {
+  background: rgba(192, 64, 64, 0.2);
+  color: var(--color-red-light);
+}
+
+.section-header {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.section-title {
+  font-family: var(--font-title);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-accent);
+  display: inline-block;
+  padding: 0 2rem;
+  position: relative;
+}
+
+.section-title::before,
+.section-title::after {
+  content: '—';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-border-accent);
+}
+
+.section-title::before {
+  left: 0;
+}
+
+.section-title::after {
+  right: 0;
+}
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  justify-items: center;
+}
+
+.action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.action-label {
+  font-family: var(--font-title);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.quick-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.quick-item {
+  cursor: pointer;
+}
+
+.status-card {
+  width: 100%;
+}
+
+.status-grid {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+}
+
+.status-icon {
+  font-size: 1.75rem;
+}
+
+.status-info {
+  text-align: center;
+}
+
+.status-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.status-value {
+  font-family: var(--font-title);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.status-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--color-border);
+}
+
+@media (max-width: 1024px) {
+  .actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .quick-actions {
+    gap: 1rem;
+  }
+  
+  .status-grid {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .status-divider {
+    display: none;
+  }
 }
 </style>

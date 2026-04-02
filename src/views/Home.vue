@@ -1,56 +1,94 @@
 <template>
-  <div class="home-container">
-    <div class="home-bg">
-      <div class="bg-gradient"></div>
-      <div class="mountain mountain-1"></div>
-      <div class="mountain mountain-2"></div>
-      <div class="mountain mountain-3"></div>
-      <div class="cloud cloud-1"></div>
-      <div class="cloud cloud-2"></div>
-      <div class="cloud cloud-3"></div>
-      <div class="stars">
-        <div v-for="i in 50" :key="i" class="star" :style="getStarStyle(i)"></div>
-      </div>
+  <div class="pixel-home">
+    <div class="pixel-stars"></div>
+    <div class="pixel-particles">
+      <div v-for="i in 20" :key="i" class="particle" :style="getParticleStyle(i)"></div>
     </div>
     
     <div class="home-content">
       <div class="title-section">
-        <div class="title-decoration top">
-          <span class="deco-line"></span>
-          <span class="deco-icon">☯</span>
-          <span class="deco-line"></span>
-        </div>
-        
-        <h1 class="title-main">修仙世界</h1>
-        <p class="title-sub">The World of Immortals</p>
-        
-        <div class="title-decoration bottom">
-          <span class="deco-line"></span>
-          <span class="deco-icon">☯</span>
-          <span class="deco-line"></span>
-        </div>
+        <div class="game-logo">🏔️</div>
+        <h1 class="game-title pixel-title">修仙世界</h1>
+        <div class="game-subtitle">THE WORLD OF IMMORTALS</div>
+        <div class="version-tag">v0.1.0 Pixel Edition</div>
       </div>
       
       <div class="menu-section">
-        <button class="menu-btn primary" @click="startNewGame">
-          <span class="btn-icon">🌟</span>
-          <span class="btn-text">开始新游戏</span>
-        </button>
+        <PixelCard variant="primary" class="menu-card">
+          <template #header>
+            <span class="card-icon">🎮</span>
+            <span>开始游戏</span>
+          </template>
+          <div class="menu-buttons">
+            <PixelButton 
+              variant="success" 
+              size="large" 
+              icon="⚔️"
+              @click="startNewGame"
+            >
+              新的游戏
+            </PixelButton>
+            <PixelButton 
+              variant="primary" 
+              size="large" 
+              icon="📖"
+              @click="continueGame"
+            >
+              继续游戏
+            </PixelButton>
+          </div>
+        </PixelCard>
         
-        <button class="menu-btn" @click="loadGame">
-          <span class="btn-icon">📜</span>
-          <span class="btn-text">读取存档</span>
-        </button>
-        
-        <button class="menu-btn" @click="goSettings">
-          <span class="btn-icon">⚙️</span>
-          <span class="btn-text">游戏设置</span>
-        </button>
+        <div class="quick-menu">
+          <PixelButton variant="warning" size="medium" icon="⚙️" @click="openSettings">
+            设置
+          </PixelButton>
+          <PixelButton variant="info" size="medium" icon="📚" @click="openGuide">
+            引导
+          </PixelButton>
+          <PixelButton variant="purple" size="medium" icon="🏆" @click="openAchievements">
+            成就
+          </PixelButton>
+        </div>
+      </div>
+      
+      <div class="info-section">
+        <PixelPanel variant="default" size="small" class="info-panel">
+          <template #title>
+            <span class="panel-icon">ℹ️</span>
+            游戏信息
+          </template>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-icon">🎨</span>
+              <span class="info-label">风格</span>
+              <span class="info-value">像素艺术</span>
+            </div>
+            <div class="info-item">
+              <span class="info-icon">🎯</span>
+              <span class="info-label">类型</span>
+              <span class="info-value">策略修仙</span>
+            </div>
+            <div class="info-item">
+              <span class="info-icon">🤖</span>
+              <span class="info-label">AI</span>
+              <span class="info-value">内容生成</span>
+            </div>
+            <div class="info-item">
+              <span class="info-icon">🌐</span>
+              <span class="info-label">平台</span>
+              <span class="info-value">跨平台</span>
+            </div>
+          </div>
+        </PixelPanel>
       </div>
       
       <div class="footer-section">
-        <div class="version">v0.1.0</div>
-        <div class="tagline">AI增强修仙模拟游戏</div>
+        <div class="footer-text">
+          <span>© 2024 修仙世界团队</span>
+          <span class="separator">|</span>
+          <span>Powered by Vue 3 + TypeScript</span>
+        </div>
       </div>
     </div>
   </div>
@@ -58,6 +96,9 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import PixelButton from '@/components/ui/PixelButton.vue'
+import PixelCard from '@/components/ui/PixelCard.vue'
+import PixelPanel from '@/components/ui/PixelPanel.vue'
 
 const router = useRouter()
 
@@ -65,26 +106,36 @@ function startNewGame() {
   router.push('/new-game')
 }
 
-function loadGame() {
-  router.push('/load-game')
+function continueGame() {
+  const savedGame = localStorage.getItem('immortalWorldSave')
+  if (savedGame) {
+    router.push('/game')
+  } else {
+    alert('没有找到存档，请开始新游戏！')
+  }
 }
 
-function goSettings() {
-  router.push('/settings')
+function openSettings() {
+  alert('设置功能开发中...')
 }
 
-function getStarStyle(index: number) {
-  const size = Math.random() * 2 + 1
-  const left = Math.random() * 100
-  const top = Math.random() * 60
-  const delay = Math.random() * 3
-  const duration = Math.random() * 2 + 2
+function openGuide() {
+  alert('引导功能开发中...')
+}
+
+function openAchievements() {
+  alert('成就功能开发中...')
+}
+
+function getParticleStyle(index: number) {
+  const x = Math.random() * 100
+  const y = Math.random() * 100
+  const delay = Math.random() * 5
+  const duration = 3 + Math.random() * 4
   
   return {
-    width: `${size}px`,
-    height: `${size}px`,
-    left: `${left}%`,
-    top: `${top}%`,
+    left: `${x}%`,
+    top: `${y}%`,
     animationDelay: `${delay}s`,
     animationDuration: `${duration}s`
   }
@@ -92,124 +143,144 @@ function getStarStyle(index: number) {
 </script>
 
 <style scoped>
-.home-container {
+.pixel-home {
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: 
+    linear-gradient(180deg, 
+      var(--pixel-color-bg-dark) 0%, 
+      var(--pixel-color-bg) 50%, 
+      var(--pixel-color-bg-dark) 100%
+    );
   position: relative;
   overflow: hidden;
-  background: var(--color-bg-primary);
+  padding: 2rem;
 }
 
-.home-bg {
+.pixel-stars {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(2px 2px at 50px 160px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(2px 2px at 90px 40px, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(2px 2px at 130px 80px, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(2px 2px at 160px 120px, rgba(255, 255, 255, 0.6), transparent);
+  background-size: 200px 200px;
+  animation: twinkle 4s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+.pixel-particles {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.bg-gradient {
+.particle {
   position: absolute;
-  inset: 0;
-  background: 
-    radial-gradient(ellipse at top, rgba(212, 175, 55, 0.05) 0%, transparent 50%),
-    radial-gradient(ellipse at bottom, rgba(192, 64, 64, 0.03) 0%, transparent 50%),
-    linear-gradient(180deg, 
-      var(--color-bg-primary) 0%, 
-      rgba(26, 26, 37, 1) 50%, 
-      rgba(42, 26, 74, 0.5) 100%
-    );
-}
-
-.mountain {
-  position: absolute;
-  bottom: 0;
-  width: 0;
-  height: 0;
-  border-style: solid;
-}
-
-.mountain-1 {
-  left: -5%;
-  border-width: 0 200px 300px 200px;
-  border-color: transparent transparent rgba(26, 26, 37, 0.8) transparent;
-}
-
-.mountain-2 {
-  left: 30%;
-  border-width: 0 250px 400px 250px;
-  border-color: transparent transparent rgba(37, 37, 80, 0.6) transparent;
-}
-
-.mountain-3 {
-  right: -10%;
-  border-width: 0 300px 350px 300px;
-  border-color: transparent transparent rgba(30, 30, 74, 0.7) transparent;
-}
-
-.cloud {
-  position: absolute;
-  background: rgba(212, 175, 55, 0.03);
+  width: 4px;
+  height: 4px;
+  background: var(--pixel-color-accent);
   border-radius: 50%;
-  filter: blur(20px);
-  animation: float 30s ease-in-out infinite;
-}
-
-.cloud-1 {
-  width: 300px;
-  height: 80px;
-  top: 20%;
-  left: 10%;
-}
-
-.cloud-2 {
-  width: 200px;
-  height: 60px;
-  top: 35%;
-  right: 15%;
-  animation-delay: -10s;
-}
-
-.cloud-3 {
-  width: 250px;
-  height: 70px;
-  top: 15%;
-  right: 30%;
-  animation-delay: -20s;
+  box-shadow: 
+    0 0 8px var(--pixel-color-accent),
+    0 0 16px var(--pixel-color-yellow);
+  animation: float 5s ease-in-out infinite;
 }
 
 @keyframes float {
-  0%, 100% { transform: translateX(0) translateY(0); }
-  25% { transform: translateX(30px) translateY(-15px); }
-  50% { transform: translateX(60px) translateY(0); }
-  75% { transform: translateX(30px) translateY(15px); }
-}
-
-.stars {
-  position: absolute;
-  inset: 0;
-}
-
-.star {
-  position: absolute;
-  background: var(--color-gold);
-  border-radius: 50%;
-  animation: twinkle 3s ease-in-out infinite;
-  opacity: 0.6;
-}
-
-@keyframes twinkle {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.8; }
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.2);
+    opacity: 1;
+  }
 }
 
 .home-content {
-  text-align: center;
+  position: relative;
   z-index: 10;
-  padding: 2rem;
-  max-width: 450px;
-  animation: fadeInUp 0.8s ease-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  max-width: 800px;
+  width: 100%;
+}
+
+.title-section {
+  text-align: center;
+  animation: fadeInDown 0.8s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.game-logo {
+  font-size: 80px;
+  filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.5));
+  margin-bottom: 1rem;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.game-title {
+  font-size: 32px;
+  margin-bottom: 0.5rem;
+  text-shadow: 
+    4px 4px 0 rgba(0, 0, 0, 0.8),
+    0 0 20px rgba(255, 204, 0, 0.5);
+  letter-spacing: 4px;
+}
+
+.game-subtitle {
+  font-family: var(--pixel-font);
+  font-size: 10px;
+  color: var(--pixel-color-secondary);
+  letter-spacing: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.version-tag {
+  display: inline-block;
+  font-family: var(--pixel-font);
+  font-size: 8px;
+  color: var(--pixel-color-accent);
+  background: rgba(255, 204, 0, 0.1);
+  border: 2px solid var(--pixel-color-accent);
+  padding: 4px 12px;
+  margin-top: 0.5rem;
+}
+
+.menu-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: fadeInUp 0.8s ease-out 0.2s backwards;
 }
 
 @keyframes fadeInUp {
@@ -223,134 +294,110 @@ function getStarStyle(index: number) {
   }
 }
 
-.title-section {
-  margin-bottom: 2.5rem;
+.menu-card {
+  width: 100%;
 }
 
-.title-decoration {
+.menu-buttons {
   display: flex;
-  align-items: center;
-  justify-content: center;
   gap: 1rem;
-  margin-bottom: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
-.title-decoration.bottom {
-  margin-top: 1rem;
-  margin-bottom: 0;
+.quick-menu {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
-.deco-line {
-  width: 60px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+.info-section {
+  width: 100%;
+  animation: fadeInUp 0.8s ease-out 0.4s backwards;
 }
 
-.deco-icon {
-  font-size: 1.25rem;
-  color: var(--color-gold);
-  opacity: 0.8;
+.info-panel {
+  width: 100%;
 }
 
-.title-main {
-  font-family: var(--font-title);
-  font-size: 3rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  text-shadow: 
-    0 0 20px rgba(212, 175, 55, 0.3),
-    0 0 40px rgba(212, 175, 55, 0.2);
-  margin-bottom: 0.5rem;
-  letter-spacing: 0.2em;
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
 }
 
-.title-sub {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  letter-spacing: 0.4em;
-  text-transform: uppercase;
-}
-
-.menu-section {
+.info-item {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 2.5rem;
-}
-
-.menu-btn {
-  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  width: 220px;
-  padding: 0.875rem 1.5rem;
-  margin: 0 auto;
-  background: linear-gradient(135deg, var(--color-bg-tertiary), var(--color-bg-secondary));
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  color: var(--color-text-primary);
-  font-family: var(--font-title);
-  font-size: var(--font-size-base);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  position: relative;
-  overflow: hidden;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px solid var(--pixel-color-secondary);
 }
 
-.menu-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), transparent);
-  opacity: 0;
-  transition: opacity var(--transition-fast);
+.info-icon {
+  font-size: 20px;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
 }
 
-.menu-btn:hover {
-  border-color: var(--color-gold-dark);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-glow);
+.info-label {
+  font-family: var(--pixel-font);
+  font-size: 8px;
+  color: var(--pixel-color-secondary);
 }
 
-.menu-btn:hover::before {
-  opacity: 1;
-}
-
-.menu-btn.primary {
-  background: linear-gradient(135deg, var(--color-gold-dark), var(--color-gold));
-  border-color: var(--color-gold);
-  color: var(--color-bg-primary);
-}
-
-.menu-btn.primary:hover {
-  box-shadow: 
-    var(--shadow-glow),
-    0 0 30px rgba(212, 175, 55, 0.3);
-}
-
-.btn-icon {
-  font-size: 1.125rem;
-}
-
-.btn-text {
-  letter-spacing: 0.1em;
+.info-value {
+  font-family: var(--pixel-font);
+  font-size: 10px;
+  color: var(--pixel-color-accent);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.8);
 }
 
 .footer-section {
-  color: var(--color-text-muted);
+  text-align: center;
+  animation: fadeInUp 0.8s ease-out 0.6s backwards;
 }
 
-.version {
-  font-size: var(--font-size-xs);
-  margin-bottom: 0.25rem;
-  color: var(--color-gold);
-  opacity: 0.6;
+.footer-text {
+  font-family: var(--pixel-font);
+  font-size: 8px;
+  color: var(--pixel-color-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.tagline {
-  font-size: var(--font-size-xs);
-  letter-spacing: 0.1em;
+.separator {
+  color: var(--pixel-color-accent);
+}
+
+@media (max-width: 768px) {
+  .pixel-home {
+    padding: 1rem;
+  }
+  
+  .game-logo {
+    font-size: 60px;
+  }
+  
+  .game-title {
+    font-size: 24px;
+  }
+  
+  .menu-buttons {
+    flex-direction: column;
+  }
+  
+  .quick-menu {
+    flex-direction: column;
+  }
+  
+  .info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

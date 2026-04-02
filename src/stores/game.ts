@@ -28,7 +28,12 @@ export const useGameStore = defineStore('game', () => {
     health: 100,
     maxHealth: 100,
     karma: 0,
-    reputation: {}
+    reputation: {},
+    wealth: 100,
+    insight: 10,
+    virtue: 50,
+    demonic: 0,
+    cultivationLevel: 0
   })
   
   const world = ref<ExtendedWorldState>({
@@ -98,6 +103,11 @@ export const useGameStore = defineStore('game', () => {
     player.value.maxHealth = 100
     player.value.karma = 0
     player.value.reputation = {}
+    player.value.wealth = 100
+    player.value.insight = 10
+    player.value.virtue = 50
+    player.value.demonic = 0
+    player.value.cultivationLevel = 0
     
     world.value = {
       seed: seed ?? Date.now(),
@@ -140,7 +150,9 @@ export const useGameStore = defineStore('game', () => {
       player: player.value,
       world: world.value,
       buildings: buildings.value,
-      events: events.value
+      events: events.value,
+      questData: {},
+      achievementData: {}
     }
   }
   

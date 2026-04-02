@@ -18,20 +18,30 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/LoadGame.vue')
   },
   {
-    path: '/game',
-    name: 'Game',
-    component: () => import('@/views/Game.vue'),
-    children: [
-      {
-        path: '',
-        name: 'GameMain',
-        component: () => import('@/views/game/Main.vue')
-      },
-      {
-        path: 'explore',
-        name: 'Explore',
-        component: () => import('@/views/game/Explore.vue')
-      },
+      path: '/game',
+      name: 'Game',
+      component: () => import('@/views/Game.vue'),
+      children: [
+        {
+          path: '',
+          name: 'GameMain',
+          component: () => import('@/views/game/PixelGame.vue')
+        },
+        {
+          path: 'main',
+          name: 'MainGame',
+          component: () => import('@/views/game/PixelGame.vue')
+        },
+        {
+          path: 'pixel',
+          name: 'PixelGame',
+          component: () => import('@/views/game/PixelGame.vue')
+        },
+        {
+          path: 'explore',
+          name: 'Explore',
+          component: () => import('@/views/game/Explore.vue')
+        },
       {
         path: 'inventory',
         name: 'Inventory',
@@ -51,6 +61,31 @@ const routes: RouteRecordRaw[] = [
         path: 'cultivation',
         name: 'Cultivation',
         component: () => import('@/views/game/Cultivation.vue')
+      },
+      {
+        path: 'quests',
+        name: 'Quests',
+        component: () => import('@/views/game/Quests.vue')
+      },
+      {
+        path: 'achievements',
+        name: 'Achievements',
+        component: () => import('@/views/game/Achievements.vue')
+      },
+      {
+        path: 'world',
+        name: 'World',
+        component: () => import('@/views/game/World.vue')
+      },
+      {
+        path: 'history',
+        name: 'History',
+        component: () => import('@/views/game/History.vue')
+      },
+      {
+        path: 'reigns',
+        name: 'Reigns',
+        component: () => import('@/views/game/Reigns.vue')
       },
       {
         path: 'settings',

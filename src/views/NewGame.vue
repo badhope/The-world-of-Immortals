@@ -1,142 +1,196 @@
 <template>
-  <div class="new-game-container">
-    <div class="new-game-bg">
-      <div class="bg-gradient"></div>
-      <div class="mountain mountain-1"></div>
-      <div class="mountain mountain-2"></div>
-      <div class="stars">
-        <div v-for="i in 30" :key="i" class="star" :style="getStarStyle(i)"></div>
+  <div class="pixel-new-game">
+    <div class="background-effects">
+      <div class="pixel-grid-bg"></div>
+      <div class="floating-symbols">
+        <div v-for="i in 15" :key="i" class="symbol" :style="getSymbolStyle(i)">
+          {{ getRandomSymbol() }}
+        </div>
       </div>
     </div>
-
+    
     <div class="new-game-content">
-      <div class="new-game-card card">
-        <div class="card-header">
-          <div class="header-decoration">
-            <span class="deco-line"></span>
-            <span class="deco-icon">☯</span>
-            <span class="deco-line"></span>
-          </div>
-          <h2 class="card-title">创建角色</h2>
-          <p class="card-subtitle">踏入修仙之路</p>
+      <div class="header-section">
+        <PixelButton variant="secondary" size="small" icon="⬅️" @click="goBack">
+          返回
+        </PixelButton>
+        <h1 class="page-title pixel-title">创建角色</h1>
+        <div class="step-indicator">
+          <div :class="['step', { active: currentStep >= 1 }]">1</div>
+          <div class="step-line"></div>
+          <div :class="['step', { active: currentStep >= 2 }]">2</div>
+          <div class="step-line"></div>
+          <div :class="['step', { active: currentStep >= 3 }]">3</div>
         </div>
-
-        <div class="form-content">
-          <div class="form-section">
-            <div class="form-group">
-              <label class="form-label">
-                <span class="label-icon">👤</span>
-                <span class="label-text">道号</span>
-              </label>
-              <input
-                v-model="playerName"
-                class="input"
-                placeholder="请输入你的道号"
-                maxlength="12"
-              />
-              <p class="form-hint">道号将在修仙界中代表你的身份</p>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">
-                <span class="label-icon">🌍</span>
-                <span class="label-text">世界种子</span>
-                <span class="label-optional">（可选）</span>
-              </label>
-              <input
-                v-model="worldSeed"
-                class="input"
-                placeholder="留空则随机生成"
-                type="number"
-              />
-              <p class="form-hint">相同种子会生成相同的世界布局</p>
-            </div>
+      </div>
+      
+      <div class="main-content">
+        <transition name="slide-fade" mode="out-in">
+          <div v-if="currentStep === 1" key="step1" class="step-content">
+            <PixelCard variant="primary" class="step-card">
+              <template #header>
+                <span class="card-icon">👤</span>
+                <span>角色信息</span>
+              </template>
+              
+              <div class="form-section">
+                <div class="form-group">
+                  <label class="form-label">角色名称</label>
+                  <input 
+                    v-model="character.name" 
+                    type="text" 
+                    class="pixel-input"
+                    placeholder="请输入角色名称"
+                    maxlength="10"
+                  >
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">性别</label>
+                  <div class="gender-options">
+                    <div 
+                      :class="['gender-option', { selected: character.gender === 'male' }]"
+                      @click="character.gender = 'male'"
+                    >
+                      <span class="gender-icon">👨</span>
+                      <span class="gender-text">男</span>
+                    </div>
+                    <div 
+                      :class="['gender-option', { selected: character.gender === 'female' }]"
+                      @click="character.gender = 'female'"
+                    >
+                      <span class="gender-icon">👩</span>
+                      <span class="gender-text">女</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">角色头像</label>
+                  <div class="avatar-options">
+                    <div 
+                      v-for="avatar in avatarOptions" 
+                      :key="avatar"
+                      :class="['avatar-option', { selected: character.avatar === avatar }]"
+                      @click="character.avatar = avatar"
+                    >
+                      {{ avatar }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </PixelCard>
           </div>
-
-          <div class="preview-section">
-            <div class="section-header">
-              <span class="section-icon">📊</span>
-              <h3 class="section-title">初始属性</h3>
-            </div>
-            <div class="stats-preview">
-              <div class="stat-item">
-                <div class="stat-icon">💪</div>
-                <div class="stat-info">
-                  <span class="stat-name">力量</span>
-                  <span class="stat-value">10</span>
+          
+          <div v-else-if="currentStep === 2" key="step2" class="step-content">
+            <PixelCard variant="success" class="step-card">
+              <template #header>
+                <span class="card-icon">🎯</span>
+                <span>选择出身</span>
+              </template>
+              
+              <div class="origin-grid">
+                <div 
+                  v-for="origin in originOptions" 
+                  :key="origin.id"
+                  :class="['origin-card', { selected: character.origin === origin.id }]"
+                  @click="selectOrigin(origin.id)"
+                >
+                  <div class="origin-icon">{{ origin.icon }}</div>
+                  <div class="origin-name">{{ origin.name }}</div>
+                  <div class="origin-desc">{{ origin.description }}</div>
+                  <div class="origin-bonus">
+                    <span v-for="(bonus, index) in origin.bonuses" :key="index" class="bonus-tag">
+                      {{ bonus }}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div class="stat-item">
-                <div class="stat-icon">🏃</div>
-                <div class="stat-info">
-                  <span class="stat-name">敏捷</span>
-                  <span class="stat-value">10</span>
-                </div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-icon">🧠</div>
-                <div class="stat-info">
-                  <span class="stat-name">智力</span>
-                  <span class="stat-value">10</span>
-                </div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-icon">🎯</div>
-                <div class="stat-info">
-                  <span class="stat-name">意志</span>
-                  <span class="stat-value">10</span>
-                </div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-icon">🍀</div>
-                <div class="stat-info">
-                  <span class="stat-name">幸运</span>
-                  <span class="stat-value">10</span>
-                </div>
-              </div>
-            </div>
+            </PixelCard>
           </div>
-
-          <div class="starting-items">
-            <div class="section-header">
-              <span class="section-icon">🎁</span>
-              <h3 class="section-title">初始物品</h3>
-            </div>
-            <div class="items-list">
-              <div class="item-preview">
-                <div class="item-icon">💎</div>
-                <div class="item-info">
-                  <span class="item-name">下品灵石</span>
-                  <span class="item-count">x100</span>
+          
+          <div v-else-if="currentStep === 3" key="step3" class="step-content">
+            <PixelCard variant="warning" class="step-card">
+              <template #header>
+                <span class="card-icon">✨</span>
+                <span>属性分配</span>
+              </template>
+              
+              <div class="attributes-section">
+                <div class="points-remaining">
+                  剩余点数: <span class="points-value">{{ remainingPoints }}</span>
+                </div>
+                
+                <div class="attribute-list">
+                  <div v-for="attr in attributes" :key="attr.id" class="attribute-item">
+                    <div class="attr-header">
+                      <span class="attr-icon">{{ attr.icon }}</span>
+                      <span class="attr-name">{{ attr.name }}</span>
+                      <span class="attr-value">{{ character.attributes[attr.id] }}</span>
+                    </div>
+                    <div class="attr-controls">
+                      <PixelButton 
+                        variant="danger" 
+                        size="small" 
+                        @click="decreaseAttribute(attr.id)"
+                        :disabled="character.attributes[attr.id] <= 1"
+                      >
+                        -
+                      </PixelButton>
+                      <div class="attr-bar">
+                        <div 
+                          class="attr-bar-fill" 
+                          :style="{ width: `${(character.attributes[attr.id] / 10) * 100}%` }"
+                        ></div>
+                      </div>
+                      <PixelButton 
+                        variant="success" 
+                        size="small" 
+                        @click="increaseAttribute(attr.id)"
+                        :disabled="remainingPoints <= 0"
+                      >
+                        +
+                      </PixelButton>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="item-preview">
-                <div class="item-icon">🌿</div>
-                <div class="item-info">
-                  <span class="item-name">灵草</span>
-                  <span class="item-count">x10</span>
-                </div>
-              </div>
-              <div class="item-preview">
-                <div class="item-icon">📜</div>
-                <div class="item-info">
-                  <span class="item-name">基础功法</span>
-                  <span class="item-count">x1</span>
-                </div>
-              </div>
-            </div>
+            </PixelCard>
           </div>
-
-          <div class="actions">
-            <button class="btn btn-primary start-btn" :disabled="!playerName.trim()" @click="startGame">
-              <span class="btn-icon">🌟</span>
-              <span class="btn-text">踏入修仙之路</span>
-            </button>
-            <button class="btn back-btn" @click="goBack">
-              <span class="btn-icon">↩️</span>
-              <span class="btn-text">返回</span>
-            </button>
-          </div>
+        </transition>
+      </div>
+      
+      <div class="footer-section">
+        <div class="navigation-buttons">
+          <PixelButton 
+            v-if="currentStep > 1"
+            variant="secondary" 
+            size="large" 
+            icon="⬅️"
+            @click="prevStep"
+          >
+            上一步
+          </PixelButton>
+          
+          <PixelButton 
+            v-if="currentStep < 3"
+            variant="primary" 
+            size="large" 
+            icon="➡️"
+            @click="nextStep"
+          >
+            下一步
+          </PixelButton>
+          
+          <PixelButton 
+            v-if="currentStep === 3"
+            variant="success" 
+            size="large" 
+            icon="⚔️"
+            @click="startGame"
+          >
+            开始冒险
+          </PixelButton>
         </div>
       </div>
     </div>
@@ -144,199 +198,292 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useGameStore } from '@/stores/game'
+import PixelButton from '@/components/ui/PixelButton.vue'
+import PixelCard from '@/components/ui/PixelCard.vue'
 
 const router = useRouter()
-const gameStore = useGameStore()
 
-const playerName = ref('')
-const worldSeed = ref<number | undefined>()
+const currentStep = ref(1)
+const remainingPoints = ref(5)
 
-function getStarStyle(index: number) {
-  const size = Math.random() * 2 + 1
-  const left = Math.random() * 100
-  const top = Math.random() * 100
-  const delay = Math.random() * 3
-  return {
-    width: `${size}px`,
-    height: `${size}px`,
-    left: `${left}%`,
-    top: `${top}%`,
-    animationDelay: `${delay}s`
+const character = ref({
+  name: '',
+  gender: 'male',
+  avatar: '🧙',
+  origin: '',
+  attributes: {
+    strength: 5,
+    agility: 5,
+    intelligence: 5,
+    constitution: 5,
+    charisma: 5
   }
+})
+
+const avatarOptions = ['🧙', '🧝', '🧛', '🧟', '👨', '👩', '🧑', '👴', '👵']
+
+const originOptions = [
+  {
+    id: 'noble',
+    name: '世家子弟',
+    icon: '👑',
+    description: '出生于修仙世家，资源丰富',
+    bonuses: ['+灵石', '+人脉']
+  },
+  {
+    id: 'commoner',
+    name: '平民百姓',
+    icon: '🌾',
+    description: '普通家庭出身，勤奋努力',
+    bonuses: ['+意志', '+机缘']
+  },
+  {
+    id: 'merchant',
+    name: '商贾之家',
+    icon: '💰',
+    description: '商人家庭，精通交易',
+    bonuses: ['+财富', '+口才']
+  },
+  {
+    id: 'orphan',
+    name: '孤儿流浪',
+    icon: '🌙',
+    description: '无依无靠，独立坚强',
+    bonuses: ['+生存', '+敏捷']
+  }
+]
+
+const attributes = [
+  { id: 'strength', name: '力量', icon: '💪' },
+  { id: 'agility', name: '敏捷', icon: '⚡' },
+  { id: 'intelligence', name: '智力', icon: '🧠' },
+  { id: 'constitution', name: '体质', icon: '❤️' },
+  { id: 'charisma', name: '魅力', icon: '✨' }
+]
+
+function selectOrigin(originId: string) {
+  character.value.origin = originId
+}
+
+function increaseAttribute(attrId: string) {
+  if (remainingPoints.value > 0) {
+    character.value.attributes[attrId]++
+    remainingPoints.value--
+  }
+}
+
+function decreaseAttribute(attrId: string) {
+  if (character.value.attributes[attrId] > 1) {
+    character.value.attributes[attrId]--
+    remainingPoints.value++
+  }
+}
+
+function nextStep() {
+  if (currentStep.value < 3) {
+    currentStep.value++
+  }
+}
+
+function prevStep() {
+  if (currentStep.value > 1) {
+    currentStep.value--
+  }
+}
+
+function startGame() {
+  if (!character.value.name) {
+    alert('请输入角色名称！')
+    return
+  }
+  if (!character.value.origin) {
+    alert('请选择出身！')
+    return
+  }
+  
+  localStorage.setItem('immortalWorldCharacter', JSON.stringify(character.value))
+  router.push('/game')
 }
 
 function goBack() {
   router.push('/')
 }
 
-async function startGame() {
-  if (!playerName.value.trim()) return
+function getRandomSymbol() {
+  const symbols = ['☯', '✦', '☆', '⚡', '🔥', '💧', '🌿', '⚔️', '🛡️', '💎']
+  return symbols[Math.floor(Math.random() * symbols.length)]
+}
 
-  try {
-    let saveId = 'temp-save-' + Date.now()
-    
-    if (window.electronAPI?.db?.createSave) {
-      saveId = await window.electronAPI.db.createSave(`${playerName.value}的存档`)
-    }
-    
-    gameStore.currentSaveId = saveId
-    gameStore.initNewGame(playerName.value.trim(), worldSeed.value)
-
-    router.push('/game')
-  } catch (error) {
-    console.error('创建存档失败:', error)
-    alert('创建存档失败，请重试')
+function getSymbolStyle(index: number) {
+  const x = Math.random() * 100
+  const y = Math.random() * 100
+  const delay = Math.random() * 10
+  const duration = 10 + Math.random() * 10
+  
+  return {
+    left: `${x}%`,
+    top: `${y}%`,
+    animationDelay: `${delay}s`,
+    animationDuration: `${duration}s`
   }
 }
 </script>
 
 <style scoped>
-.new-game-container {
+.pixel-new-game {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pixel-color-bg);
   position: relative;
-  width: 100%;
-  height: 100%;
   overflow: hidden;
+  padding: 2rem;
 }
 
-.new-game-bg {
+.background-effects {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a25 50%, #0a0a0f 100%);
+  inset: 0;
+  pointer-events: none;
 }
 
-.bg-gradient {
+.pixel-grid-bg {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(ellipse at center top, rgba(212, 175, 55, 0.1) 0%, transparent 50%);
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
-.mountain {
+.floating-symbols {
   position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 40%;
-  background: linear-gradient(to top, #0a0a0f, transparent);
-  clip-path: polygon(0 100%, 50% 20%, 100% 100%);
+  inset: 0;
 }
 
-.mountain-1 {
-  height: 35%;
-  opacity: 0.3;
-  background: linear-gradient(to top, #12121a, transparent);
-}
-
-.mountain-2 {
-  height: 45%;
-  opacity: 0.2;
-  background: linear-gradient(to top, #1a1a25, transparent);
-  clip-path: polygon(0 100%, 30% 30%, 70% 40%, 100% 100%);
-}
-
-.stars {
+.symbol {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  font-size: 24px;
+  opacity: 0.1;
+  animation: floatSymbol 15s ease-in-out infinite;
 }
 
-.star {
-  position: absolute;
-  background: var(--color-gold);
-  border-radius: 50%;
-  animation: twinkle 3s ease-in-out infinite;
-}
-
-@keyframes twinkle {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
+@keyframes floatSymbol {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.1;
+  }
+  50% {
+    transform: translateY(-50px) rotate(180deg);
+    opacity: 0.3;
+  }
 }
 
 .new-game-content {
   position: relative;
   z-index: 10;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-}
-
-.new-game-card {
-  width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow-y: auto;
-  background: linear-gradient(135deg, rgba(21, 21, 31, 0.95), rgba(18, 18, 26, 0.95));
-  border: 1px solid var(--color-border-accent);
-  box-shadow: 0 0 30px rgba(212, 175, 55, 0.1);
-}
-
-.card-header {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.header-decoration {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-.deco-line {
-  width: 60px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
-}
-
-.deco-icon {
-  font-size: 1.5rem;
-  color: var(--color-gold);
-  animation: rotate 10s linear infinite;
-}
-
-@keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.card-title {
-  font-family: var(--font-title);
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--color-gold);
-  margin-bottom: 0.25rem;
-}
-
-.card-subtitle {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-}
-
-.form-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+}
+
+.header-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-title {
+  font-size: 24px;
+  text-shadow: 
+    4px 4px 0 rgba(0, 0, 0, 0.8),
+    0 0 20px rgba(255, 204, 0, 0.5);
+  letter-spacing: 2px;
+}
+
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.step {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--pixel-font);
+  font-size: 12px;
+  background: var(--pixel-color-bg-light);
+  border: 3px solid var(--pixel-color-secondary);
+  color: var(--pixel-color-secondary);
+  transition: all 0.3s;
+}
+
+.step.active {
+  background: var(--pixel-color-accent);
+  border-color: var(--pixel-color-highlight);
+  color: var(--pixel-color-bg-dark);
+  box-shadow: 0 0 12px rgba(255, 204, 0, 0.5);
+}
+
+.step-line {
+  width: 40px;
+  height: 3px;
+  background: var(--pixel-color-secondary);
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.step-content {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.slide-fade-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.step-card {
+  width: 100%;
 }
 
 .form-section {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
 }
 
 .form-group {
@@ -346,177 +493,296 @@ async function startGame() {
 }
 
 .form-label {
+  font-family: var(--pixel-font);
+  font-size: 10px;
+  color: var(--pixel-color-accent);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.8);
+}
+
+.pixel-input {
+  font-family: var(--pixel-font);
+  font-size: 12px;
+  padding: 12px 16px;
+  background: var(--pixel-color-bg-dark);
+  border: 4px solid var(--pixel-color-secondary);
+  color: var(--pixel-color-primary);
+  outline: none;
+  transition: all 0.2s;
+}
+
+.pixel-input:focus {
+  border-color: var(--pixel-color-accent);
+  box-shadow: 0 0 12px rgba(255, 204, 0, 0.3);
+}
+
+.pixel-input::placeholder {
+  color: var(--pixel-color-secondary);
+}
+
+.gender-options {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-}
-
-.label-icon {
-  font-size: 1rem;
-}
-
-.label-text {
-  font-family: var(--font-title);
-}
-
-.label-optional {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-}
-
-.form-hint {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-  margin-top: 0.25rem;
-}
-
-.preview-section,
-.starting-items {
-  padding: 1rem;
-  background: linear-gradient(135deg, var(--color-bg-tertiary), var(--color-bg-secondary));
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.section-icon {
-  font-size: 1.25rem;
-}
-
-.section-title {
-  font-family: var(--font-title);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--color-text-accent);
-}
-
-.stats-preview {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.75rem;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 0.5rem;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
-}
-
-.stat-item:hover {
-  border-color: var(--color-gold-dark);
-  box-shadow: 0 0 10px rgba(212, 175, 55, 0.2);
-}
-
-.stat-icon {
-  font-size: 1.25rem;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.stat-name {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-muted);
-}
-
-.stat-value {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--color-gold);
-}
-
-.items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.item-preview {
-  display: flex;
-  align-items: center;
   gap: 1rem;
-  padding: 0.75rem;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
 }
 
-.item-preview:hover {
-  border-color: var(--color-jade-dark);
-  background: var(--color-bg-hover);
+.gender-option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--pixel-color-bg-dark);
+  border: 4px solid var(--pixel-color-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.item-icon {
-  font-size: 1.5rem;
+.gender-option:hover {
+  border-color: var(--pixel-color-accent);
 }
 
-.item-info {
+.gender-option.selected {
+  background: rgba(255, 204, 0, 0.1);
+  border-color: var(--pixel-color-accent);
+  box-shadow: 0 0 12px rgba(255, 204, 0, 0.3);
+}
+
+.gender-icon {
+  font-size: 32px;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
+}
+
+.gender-text {
+  font-family: var(--pixel-font);
+  font-size: 10px;
+  color: var(--pixel-color-primary);
+}
+
+.avatar-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 0.5rem;
+}
+
+.avatar-option {
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  font-size: 32px;
+  background: var(--pixel-color-bg-dark);
+  border: 4px solid var(--pixel-color-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  filter: grayscale(0.5);
+}
+
+.avatar-option:hover {
+  border-color: var(--pixel-color-accent);
+  filter: grayscale(0);
+}
+
+.avatar-option.selected {
+  background: rgba(255, 204, 0, 0.1);
+  border-color: var(--pixel-color-accent);
+  filter: grayscale(0);
+  box-shadow: 0 0 12px rgba(255, 204, 0, 0.3);
+}
+
+.origin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.origin-card {
+  padding: 1rem;
+  background: var(--pixel-color-bg-dark);
+  border: 4px solid var(--pixel-color-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.origin-card:hover {
+  border-color: var(--pixel-color-accent);
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+}
+
+.origin-card.selected {
+  background: rgba(255, 204, 0, 0.1);
+  border-color: var(--pixel-color-accent);
+  box-shadow: 
+    0 0 12px rgba(255, 204, 0, 0.3),
+    4px 4px 0 rgba(0, 0, 0, 0.3);
+}
+
+.origin-icon {
+  font-size: 40px;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
+}
+
+.origin-name {
+  font-family: var(--pixel-font);
+  font-size: 12px;
+  color: var(--pixel-color-accent);
+  text-align: center;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.8);
+}
+
+.origin-desc {
+  font-family: var(--pixel-font);
+  font-size: 8px;
+  color: var(--pixel-color-primary);
+  text-align: center;
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.origin-bonus {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: center;
+}
+
+.bonus-tag {
+  font-family: var(--pixel-font);
+  font-size: 8px;
+  color: var(--pixel-color-bg-dark);
+  background: var(--pixel-color-green);
+  padding: 2px 8px;
+  border: 2px solid var(--pixel-color-green-dark);
+}
+
+.attributes-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.points-remaining {
+  font-family: var(--pixel-font);
+  font-size: 12px;
+  color: var(--pixel-color-accent);
+  text-align: center;
+  padding: 0.5rem;
+  background: rgba(255, 204, 0, 0.1);
+  border: 2px solid var(--pixel-color-accent);
+}
+
+.points-value {
+  font-size: 16px;
+  text-shadow: 0 0 8px rgba(255, 204, 0, 0.5);
+}
+
+.attribute-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.attribute-item {
+  padding: 0.75rem;
+  background: var(--pixel-color-bg-dark);
+  border: 2px solid var(--pixel-color-secondary);
+}
+
+.attr-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.attr-icon {
+  font-size: 20px;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.5));
+}
+
+.attr-name {
+  font-family: var(--pixel-font);
+  font-size: 10px;
+  color: var(--pixel-color-primary);
   flex: 1;
 }
 
-.item-name {
-  font-weight: 500;
-  color: var(--color-text-primary);
+.attr-value {
+  font-family: var(--pixel-font);
+  font-size: 14px;
+  color: var(--pixel-color-accent);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.8);
 }
 
-.item-count {
-  font-size: var(--font-size-sm);
-  color: var(--color-jade);
-  font-weight: 600;
-}
-
-.actions {
+.attr-controls {
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.start-btn {
-  width: 100%;
-  padding: 1rem;
-  font-size: var(--font-size-lg);
-  font-weight: 600;
+.attr-bar {
+  flex: 1;
+  height: 12px;
+  background: var(--pixel-color-bg);
+  border: 2px solid var(--pixel-color-secondary);
+  position: relative;
+  overflow: hidden;
 }
 
-.back-btn {
-  width: 100%;
+.attr-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, 
+    var(--pixel-color-green-dark) 0%, 
+    var(--pixel-color-green) 50%, 
+    var(--pixel-color-green-light) 100%
+  );
+  transition: width 0.3s;
+}
+
+.footer-section {
+  display: flex;
+  justify-content: center;
+}
+
+.navigation-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 @media (max-width: 768px) {
-  .new-game-content {
+  .pixel-new-game {
     padding: 1rem;
   }
-
-  .stats-preview {
+  
+  .header-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .page-title {
+    font-size: 20px;
+    text-align: center;
+  }
+  
+  .step-indicator {
+    justify-content: center;
+  }
+  
+  .origin-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .avatar-options {
     grid-template-columns: repeat(3, 1fr);
   }
-
-  .stat-item:nth-child(4),
-  .stat-item:nth-child(5) {
-    grid-column: span 1;
+  
+  .navigation-buttons {
+    flex-direction: column;
   }
 }
 </style>
